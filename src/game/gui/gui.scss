@@ -1,0 +1,19 @@
+@import "style/palette.scss";
+
+.gui-main {
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  & > .left-panel {
+    padding: 8px;
+    background-color: #0004;
+    height: 100%;
+    width: 256px;
+    max-width: 100%;
+    border-right: 1px solid $md-light-blue-400;
+  }
+}
