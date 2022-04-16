@@ -20,9 +20,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "experimentalDecorators": true,
     "jsx": "react-jsx"
   },
   "include": [
-    "src"
+    "src/index.tsx"
   ]
 }

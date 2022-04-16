@@ -1,0 +1,18 @@
+@import "../style/palette.scss";
+
+.icon-button {
+  display: flex;
+  padding: 0;
+  border: 1px solid $md-light-blue-200;
+  border-radius: 1vw;
+  background-color: rgba($md-light-blue-400, 0.5);
+  box-shadow: 0 2px 4px #0004;
+  height: auto;
+  color: #fff;
+
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: $md-light-blue-400;
+  }
+}

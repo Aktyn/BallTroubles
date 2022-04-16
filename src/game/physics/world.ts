@@ -9,6 +9,15 @@ export class PhysicsWorld {
     // this.world.SetContinuousPhysics(true)
   }
 
+  destroy() {
+    let body = this.world.GetBodyList()?.m_next
+    while (body) {
+      const next = body.m_next
+      this.world.DestroyBody(body)
+      body = next
+    }
+  }
+
   update(deltaTime: number) {
     this.world.Step(deltaTime, 8, 8)
   }

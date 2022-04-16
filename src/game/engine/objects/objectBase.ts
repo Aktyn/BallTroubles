@@ -1,29 +1,44 @@
-import { Matrix4x4, Vector2, XY } from 'utils'
+import { Vector3 } from '../../../utils'
+import { Renderable } from '../common/renderable'
+import { DefaultProperties, OBJECT_MATERIAL, OBJECT_TYPE } from './common'
 
-export abstract class ObjectBase {
-  private readonly modelViewMatrix: Matrix4x4
-  protected _pos: Vector2
-  protected _scale: Vector2
+export interface CommonObjectProperties {
+  shape: OBJECT_TYPE
+  material?: OBJECT_MATERIAL
+  static?: boolean
+}
+
+export abstract class ObjectBase extends Renderable<null> {
+  public readonly properties: Readonly<Required<CommonObjectProperties>>
+
+  protected _pos = new Vector3()
+  protected _scale = new Vector3()
   protected _angle = 0
 
-  constructor(pos: XY | Vector2, scale: XY = new Vector2(0.1, 0.1)) {
-    this._pos = new Vector2(pos.x, pos.y)
-    this._scale = new Vector2(scale.x, scale.y)
-    this.modelViewMatrix = new Matrix4x4()
-    this.updateMatrix()
+  constructor(properties: CommonObjectProperties) {
+    super()
+    this.properties = {
+      shape: properties.shape ?? OBJECT_TYPE.BOX,
+      material: properties.material ?? OBJECT_MATERIAL.WOODEN_CRATE,
+      static: properties.static ?? false,
+    }
+
+    this._scale.setV(DefaultProperties[this.properties.shape].scale)
   }
 
-  get buffer() {
-    return this.modelViewMatrix.buffer
-  }
-
-  protected updateMatrix() {
-    this.modelViewMatrix.setRotationTranslationScale2D(
-      this._angle,
-      this._pos,
-      this._scale,
-    )
+  destroy() {
+    super.destroy()
   }
 
   abstract update(deltaTime: number): void
+
+  get pos() {
+    return this._pos
+  }
+  get scale() {
+    return this._scale
+  }
+  get angle() {
+    return this._angle
+  }
 }

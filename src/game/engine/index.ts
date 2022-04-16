@@ -1,14 +1,17 @@
-import { b2BodyType } from 'game/physics/utils'
-import { PhysicsWorld } from 'game/physics/world'
-import { randomFloat } from 'utils'
+import { randomFloat, Vector3 } from '../../utils'
+import { GUIController } from '../gui'
+import { PhysicsWorld } from '../physics/world'
+import { StarsEmitter } from './emitters/starsEmitter'
 import { GameMap } from './gameMap'
+import { OBJECT_MATERIAL, OBJECT_TYPE } from './objects/common'
 import { DynamicObject } from './objects/dynamicObject'
 
 export class GameEngine extends PhysicsWorld {
-  private readonly map = new GameMap()
+  private readonly map: GameMap
 
-  constructor() {
+  constructor(gui: GUIController) {
     super()
+    this.map = new GameMap(gui)
 
     // Temp wall
     for (let x = -10; x <= 10; x++) {
@@ -17,35 +20,80 @@ export class GameEngine extends PhysicsWorld {
           continue
         }
         const wallObj = new DynamicObject(
-          { x: x / 10, y: y / 10 },
-          { x: 0.05, y: 0.05 },
+          new Vector3(x / 10, y / 10, 0),
           this.world,
           {
-            bodyType: b2BodyType.b2_staticBody,
+            static: true,
             friction: 0,
             restitution: 0,
+            shape: OBJECT_TYPE.BOX,
+            material: OBJECT_MATERIAL.WOODEN_CRATE,
           },
         )
-        // wallObj.s
         this.map.addObject(wallObj)
       }
     }
 
+    // Floor
+    // const floorObj = new GhostObject({
+    //   shape: OBJECT_TYPE.GROUND_BOX,
+    //   material: OBJECT_MATERIAL.WOODEN_CRATE,
+    // })
+    // const boxScale = DefaultProperties[OBJECT_TYPE.BOX].scale
+    // floorObj.pos.set(0, 0, -boxScale.z)
+    // this.map.addObject(floorObj)
+
     // Some dummy objects for tests
     for (let i = 0; i < 100; i++) {
       const obj = new DynamicObject(
-        {
-          x: randomFloat(-0.9, 0.9),
-          y: randomFloat(-0.9, 0.9),
-        },
-        { x: 0.025, y: 0.025 },
+        new Vector3(randomFloat(-0.9, 0.9), randomFloat(-0.9, 0.9), 0),
         this.world,
+        {
+          shape: OBJECT_TYPE.SMALL_BALL,
+          material: OBJECT_MATERIAL.ENEMY_BALL,
+          friction: 0.5,
+        },
       )
-      obj.angle = randomFloat(-Math.PI * 2, Math.PI * 2)
-      obj.speed = randomFloat(3, 10)
+      obj.setAngle(randomFloat(-Math.PI * 2, Math.PI * 2))
+      obj.speed = randomFloat(0, 0.5)
 
       this.map.addObject(obj)
     }
+
+    // Particles test
+    this.map.addEmitter(
+      new StarsEmitter({
+        xRotationSpeed: 1,
+        yRotationSpeed: 2,
+        zRotationSpeed: 3,
+      }),
+    )
+    this.map.addEmitter(
+      new StarsEmitter({
+        xRotationSpeed: -1,
+        yRotationSpeed: -2,
+        zRotationSpeed: -3,
+      }),
+    )
+    this.map.addEmitter(
+      new StarsEmitter({
+        xRotationSpeed: 3,
+        yRotationSpeed: 2,
+        zRotationSpeed: 1,
+      }),
+    )
+    this.map.addEmitter(
+      new StarsEmitter({
+        xRotationSpeed: -3,
+        yRotationSpeed: -2,
+        zRotationSpeed: -1,
+      }),
+    )
+  }
+
+  destroy() {
+    this.map.destroy()
+    super.destroy()
   }
 
   getMap(): Readonly<GameMap> {

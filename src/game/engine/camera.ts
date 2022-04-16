@@ -1,64 +1,99 @@
-import { clamp, Matrix4x4, Vector2 } from 'utils'
+import { clamp, Vector3 } from '../../utils'
+import { GUIController } from '../gui'
 
-interface WebGLCameraParams {
-  fieldOfView: number
-  zNear: number
-  zFar: number
-}
+export class GameCamera {
+  private static MIN_ZOOM = 0.5
+  private static MAX_ZOOM = 4
+  private static MINIMUM_ZOOM_DIFFERENCE = 1e-5
+  private static ZOOM_SPEED = 8
 
-const MIN_ZOOM = 0.1
-const MAX_ZOOM = 2
-
-export class PerspectiveCamera {
-  private readonly params: WebGLCameraParams
-  private readonly projectionMatrix = new Matrix4x4()
-  public readonly position = new Vector2()
-  private _zoom = 1.3 //1.2
-  private aspect: number
-
-  constructor(aspectRatio: number, params: Partial<WebGLCameraParams> = {}) {
-    this.params = {
-      fieldOfView: params.fieldOfView ?? Math.PI * 0.5, // 90 degrees (was 45 by default)
-      zNear: params.zNear ?? 0.1,
-      zFar: params.zFar ?? 10,
-    }
-    this.aspect = aspectRatio
-
-    this.update()
+  private readonly eventListeners = {
+    onResize: this.handleMouseWheel.bind(this),
+    onZoomReset: this.resetZoom.bind(this),
+    onZoomIn: this.zoomIn.bind(this),
+    onZoomOut: this.zoomOut.bind(this),
   }
 
-  get buffer() {
-    return this.projectionMatrix.buffer
+  private readonly gui: GUIController
+
+  public readonly position = new Vector3(0, -Math.SQRT2, Math.SQRT2)
+  public readonly rotation = new Vector3(Math.PI * 0.2, 0, 0)
+  private _zoom = 1
+  private _visibleZoom = 1
+
+  constructor(gui: GUIController) {
+    this.gui = gui
+    this.setupEventListeners()
+    gui.setZoom(this._zoom)
   }
 
-  get aspectRatio() {
-    return this.aspect
+  destroy() {
+    this.removeEventListeners()
   }
 
-  /** Camera need to be updated for aspect ration change to take effect */
-  setAspectRatio(aspect: number) {
-    this.aspect = aspect
+  private setupEventListeners() {
+    window.addEventListener('wheel', this.eventListeners.onResize)
+    this.gui.events.on('zoom-reset', this.eventListeners.onZoomReset)
+    this.gui.events.on('zoom-in', this.eventListeners.onZoomIn)
+    this.gui.events.on('zoom-out', this.eventListeners.onZoomOut)
+  }
+
+  private removeEventListeners() {
+    window.removeEventListener('wheel', this.eventListeners.onResize)
+    this.gui.events.off('zoom-reset', this.eventListeners.onZoomReset)
+    this.gui.events.off('zoom-in', this.eventListeners.onZoomIn)
+    this.gui.events.off('zoom-out', this.eventListeners.onZoomOut)
+  }
+
+  private handleMouseWheel(event: WheelEvent) {
+    this.zoom = this._zoom - ((event.deltaY / 52) * 0.5) / (this._zoom + 1)
+    this.gui.setZoom(this._zoom)
+  }
+
+  private resetZoom() {
+    this.zoom = 1
+    this.gui.setZoom(this._zoom)
+  }
+
+  private zoomIn() {
+    this.zoom = this._zoom - 0.5 / (this._zoom + 1)
+    this.gui.setZoom(this._zoom)
+  }
+
+  private zoomOut() {
+    this.zoom = this._zoom + 0.5 / (this._zoom + 1)
+    this.gui.setZoom(this._zoom)
   }
 
   get zoom() {
-    return this._zoom
+    throw new Error('Cannot get internal camera zoom directly')
   }
 
   set zoom(value: number) {
-    this._zoom = clamp(value, MIN_ZOOM, MAX_ZOOM)
+    this._zoom = clamp(value, GameCamera.MIN_ZOOM, GameCamera.MAX_ZOOM)
+    console.log('zoom:', this._zoom)
   }
 
-  update() {
-    this.projectionMatrix.setPerspective(
-      this.params.fieldOfView,
-      this.aspect,
-      this.params.zNear,
-      this.params.zFar,
-    )
-    this.projectionMatrix.setTranslation(
-      this.position.x,
-      this.position.y,
-      -this._zoom,
-    )
+  get visibleZoom() {
+    return this._visibleZoom
+  }
+
+  update(deltaTime: number) {
+    //TODO: smooth camera movement
+    // this.position.x += 0.05 * deltaTime
+
+    const zoomDiff = this._zoom - this._visibleZoom
+    const diffSign = Math.sign(zoomDiff)
+    if (Math.abs(zoomDiff) > GameCamera.MINIMUM_ZOOM_DIFFERENCE) {
+      this._visibleZoom +=
+        Math.sign(zoomDiff) *
+        Math.max(0.01, Math.pow(Math.abs(zoomDiff), 1.5)) *
+        deltaTime *
+        GameCamera.ZOOM_SPEED
+
+      if (diffSign !== Math.sign(this._zoom - this._visibleZoom)) {
+        this._visibleZoom = this._zoom
+      }
+    }
   }
 }

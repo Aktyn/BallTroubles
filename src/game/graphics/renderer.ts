@@ -1,4 +1,4 @@
-import { GameMap } from 'game/engine/gameMap'
+import { GameMap } from '../engine/gameMap'
 
 export abstract class Renderer {
   protected readonly canvas: HTMLCanvasElement

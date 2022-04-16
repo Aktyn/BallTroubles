@@ -40,10 +40,7 @@
         "varsIgnorePattern": "^_"
       }
     ],
-    "indent": [
-      "error",
-      2
-    ],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
     "linebreak-style": [
       "error",
       "unix"
@@ -56,6 +53,7 @@
       "error",
       "never"
     ],
+    "arrowParens": "off",
     "import/default": 0,
     "import/extensions": 0,
     "import/named": 0,

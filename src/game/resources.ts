@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-
-// const ballTexture = require('../textures/ball.png')
-
 let loadingResources = 0
 const onLoadListeners: Array<() => void> = []
 
@@ -30,13 +27,8 @@ function loadShaderSource(
   }))
 }
 
-function loadTexture(imgSrc: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image()
-    image.onerror = reject
-    image.onload = () => resolve(image)
-    image.src = imgSrc
-  })
+async function loadMapData(jsonPath: string) {
+  return jsonPath
 }
 
 function parseLoaders<Name extends string, ResourceDataType>(
@@ -70,17 +62,17 @@ export const Resources = {
 
   shaders: parseLoaders([
     {
-      name: 'main',
+      name: 'particles',
       loader: loadShaderSource(
-        require('./graphics/glsl/main.fs'),
-        require('./graphics/glsl/main.vs'),
+        require('assets/shaders/particles.fs'),
+        require('assets/shaders/particles.vs'),
       ),
     },
   ]),
-  textures: parseLoaders([
+  maps: parseLoaders([
     {
-      name: 'ball',
-      loader: loadTexture(require('./graphics/textures/ball.png')),
+      name: 'tutorial',
+      loader: loadMapData(require('assets/maps/tutorial.json')),
     },
   ]),
 
