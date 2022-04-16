@@ -28,9 +28,38 @@ abstract class Vector<Length extends number> {
     return this
   }
 
+  addV(vector: Vector<Length>) {
+    for (let i = 0; i < this.buffer.length; i++) {
+      this.buffer[i] += vector.buffer[i]
+    }
+    return this
+  }
+
+  subtractV(vector: Vector<Length>) {
+    for (let i = 0; i < this.buffer.length; i++) {
+      this.buffer[i] -= vector.buffer[i]
+    }
+    return this
+  }
+
+  lerp(vector: Vector<Length>, factor: number) {
+    for (let i = 0; i < this.buffer.length; i++) {
+      this.buffer[i] += (vector.buffer[i] - this.buffer[i]) * factor
+    }
+
+    return this
+  }
+
   scale(value: number) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] *= value
+    }
+    return this
+  }
+
+  scaleV(vector: Vector<Length>) {
+    for (let i = 0; i < this.buffer.length; i++) {
+      this.buffer[i] *= vector.buffer[i]
     }
     return this
   }
@@ -153,6 +182,10 @@ export const Vector2 = WithPropertyAccessors(
 
     copy() {
       return new Vector2(this.buffer[0], this.buffer[1])
+    }
+
+    toAngle() {
+      return Math.atan2(this.buffer[1], this.buffer[0])
     }
   },
 )

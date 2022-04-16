@@ -1,4 +1,20 @@
 import { GameMap } from '../engine/gameMap'
+import { BACKGROUND_TEXTURE } from '../engine/objects/common'
+
+export interface EnvironmentOptions {
+  color: number | string
+  ambientLight: {
+    color?: number | string
+    intensity: number
+  }
+  fog: {
+    color?: number | string
+    near: number
+    far: number
+  }
+  backgroundColor: number | string
+  backgroundTexture: BACKGROUND_TEXTURE
+}
 
 export abstract class Renderer {
   protected readonly canvas: HTMLCanvasElement
@@ -40,4 +56,6 @@ export abstract class Renderer {
 
   protected abstract onResize(): void
   abstract render(map: Readonly<GameMap>): void
+
+  abstract setupEnvironment(options: Partial<EnvironmentOptions>): void
 }

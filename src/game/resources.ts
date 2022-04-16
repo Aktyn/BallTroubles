@@ -27,10 +27,6 @@ function loadShaderSource(
   }))
 }
 
-async function loadMapData(jsonPath: string) {
-  return jsonPath
-}
-
 function parseLoaders<Name extends string, ResourceDataType>(
   resourceLoaders: { name: Name; loader: Promise<ResourceDataType> }[],
 ) {
@@ -67,12 +63,6 @@ export const Resources = {
         require('assets/shaders/particles.fs'),
         require('assets/shaders/particles.vs'),
       ),
-    },
-  ]),
-  maps: parseLoaders([
-    {
-      name: 'tutorial',
-      loader: loadMapData(require('assets/maps/tutorial.json')),
     },
   ]),
 

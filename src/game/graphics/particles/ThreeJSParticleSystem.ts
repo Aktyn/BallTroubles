@@ -3,7 +3,6 @@ import {
   EmitterBase,
   RendererUpdateData,
 } from '../../engine/emitters/emitterBase'
-import { OBJECT_MATERIAL } from '../../engine/objects/common'
 import { ThreeJSResources } from '../threeJSResources'
 
 export class ThreeJSParticleSystem {
@@ -17,15 +16,20 @@ export class ThreeJSParticleSystem {
   private readonly sizeBuffer: THREE.Float32BufferAttribute
   private readonly colorBuffer: THREE.Float32BufferAttribute
 
-  constructor(emitter: EmitterBase, canvasHeight: number) {
+  constructor(
+    emitter: EmitterBase,
+    canvasHeight: number,
+    frustumCulled: boolean,
+  ) {
     this.emitter = emitter
 
     const geometry = new THREE.BufferGeometry()
 
     this.particleSystem = new THREE.Points(
       geometry,
-      ThreeJSResources.getMaterial(OBJECT_MATERIAL.STAR_PARTICLE),
+      ThreeJSResources.getMaterial(emitter.properties.material),
     )
+    this.particleSystem.frustumCulled = frustumCulled
 
     this.positionBuffer = new THREE.Float32BufferAttribute(
       this.emitter.positionBuffer,
@@ -52,7 +56,7 @@ export class ThreeJSParticleSystem {
       new Float32Array([canvasHeight]),
       1,
       false,
-      this.emitter.particlesCount,
+      this.emitter.properties.particlesCount,
     ).setUsage(THREE.StaticReadUsage)
     this.particleSystem.geometry.setAttribute(
       'canvasHeight',
@@ -63,7 +67,7 @@ export class ThreeJSParticleSystem {
       new Float32Array([1]),
       1,
       false,
-      this.emitter.particlesCount,
+      this.emitter.properties.particlesCount,
     ).setUsage(THREE.StaticReadUsage)
     this.particleSystem.geometry.setAttribute('zoom', this.cameraZoomBuffer)
   }

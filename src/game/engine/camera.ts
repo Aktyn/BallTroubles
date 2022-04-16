@@ -1,11 +1,17 @@
 import { clamp, Vector3 } from '../../utils'
 import { GUIController } from '../gui'
 
+interface CameraProperties {
+  targetPositionOffset: Vector3
+}
+
 export class GameCamera {
   private static MIN_ZOOM = 0.5
   private static MAX_ZOOM = 4
   private static MINIMUM_ZOOM_DIFFERENCE = 1e-5
   private static ZOOM_SPEED = 8
+  private static MOVEMENT_SMOOTHNESS = 6
+  private static TARGET_MOVEMENT_SMOOTHNESS = 8
 
   private readonly eventListeners = {
     onResize: this.handleMouseWheel.bind(this),
@@ -15,14 +21,18 @@ export class GameCamera {
   }
 
   private readonly gui: GUIController
+  private readonly properties: CameraProperties
 
-  public readonly position = new Vector3(0, -Math.SQRT2, Math.SQRT2)
-  public readonly rotation = new Vector3(Math.PI * 0.2, 0, 0)
+  public readonly position = new Vector3(0, 0, 0)
+  private _targetPosition = new Vector3(0, 0, 0)
+  private visibleTargetPosition = new Vector3(0, 0, 0)
   private _zoom = 1
   private _visibleZoom = 1
 
-  constructor(gui: GUIController) {
+  constructor(gui: GUIController, properties: CameraProperties) {
     this.gui = gui
+    this.properties = properties
+    this.position.setV(properties.targetPositionOffset)
     this.setupEventListeners()
     gui.setZoom(this._zoom)
   }
@@ -78,9 +88,44 @@ export class GameCamera {
     return this._visibleZoom
   }
 
+  get targetPosition(): Readonly<Vector3> {
+    return this.visibleTargetPosition
+  }
+
+  setTarget(target: Vector3) {
+    this._targetPosition = target
+  }
+
   update(deltaTime: number) {
-    //TODO: smooth camera movement
-    // this.position.x += 0.05 * deltaTime
+    const targetPos = this._targetPosition
+      .copy()
+      .addV(this.properties.targetPositionOffset)
+    const diffVec = this.position.copy().subtractV(targetPos)
+
+    this.position.subtractV(
+      diffVec.scale(
+        Math.min(
+          1,
+          deltaTime *
+            GameCamera.MOVEMENT_SMOOTHNESS *
+            Math.pow(diffVec.getLength(), 0.5),
+        ),
+      ),
+    )
+
+    const targetDiffVec = this._targetPosition
+      .copy()
+      .subtractV(this.visibleTargetPosition)
+    this.visibleTargetPosition.addV(
+      targetDiffVec.scale(
+        Math.min(
+          1,
+          deltaTime *
+            GameCamera.TARGET_MOVEMENT_SMOOTHNESS *
+            Math.pow(targetDiffVec.getLength(), 0.5),
+        ),
+      ),
+    )
 
     const zoomDiff = this._zoom - this._visibleZoom
     const diffSign = Math.sign(zoomDiff)

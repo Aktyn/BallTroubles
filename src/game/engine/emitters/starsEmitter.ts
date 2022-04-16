@@ -1,4 +1,5 @@
 import { randomFloat, Vector3 } from '../../../utils'
+import { OBJECT_MATERIAL } from '../objects/common'
 import { EmitterBase } from './emitterBase'
 
 interface StarsEmitterProperties {
@@ -15,14 +16,11 @@ export class StarsEmitter extends EmitterBase {
   constructor(properties: StarsEmitterProperties) {
     super({
       particlesCount: 500,
+      material: OBJECT_MATERIAL.STAR_PARTICLE,
     })
     this.starsProperties = properties
 
     this.initialize()
-  }
-
-  destroy() {
-    super.destroy()
   }
 
   private initialize() {

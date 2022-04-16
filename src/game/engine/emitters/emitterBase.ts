@@ -1,8 +1,12 @@
 import { Vector3 } from '../../../utils'
 import { Renderable } from '../common/renderable'
+import { OBJECT_MATERIAL, Updatable } from '../objects/common'
 
 interface EmitterProperties {
   particlesCount: number
+  material: OBJECT_MATERIAL
+  /** @default true */
+  frustumCulled?: boolean
 }
 
 export interface RendererUpdateData {
@@ -13,8 +17,12 @@ export interface RendererUpdateData {
   updateColors?: boolean
 }
 
-export abstract class EmitterBase extends Renderable<RendererUpdateData> {
-  protected readonly properties: EmitterProperties
+export abstract class EmitterBase
+  extends Renderable<RendererUpdateData>
+  implements Updatable
+{
+  private _destroyed = false
+  readonly properties: Readonly<Required<EmitterProperties>>
   protected readonly sizes: Float32Array
   protected readonly positions: Float32Array
   protected readonly colors: Float32Array
@@ -24,7 +32,10 @@ export abstract class EmitterBase extends Renderable<RendererUpdateData> {
 
   constructor(properties: EmitterProperties) {
     super()
-    this.properties = properties
+    this.properties = {
+      ...properties,
+      frustumCulled: properties.frustumCulled ?? true,
+    }
     this.sizes = new Float32Array(properties.particlesCount)
     this.positions = new Float32Array(properties.particlesCount * 3)
     this.colors = new Float32Array(properties.particlesCount * 3)
@@ -32,6 +43,11 @@ export abstract class EmitterBase extends Renderable<RendererUpdateData> {
 
   destroy() {
     super.destroy()
+    this._destroyed = true
+  }
+
+  get destroyed() {
+    return this._destroyed
   }
 
   get position(): Readonly<Vector3> {
@@ -52,10 +68,6 @@ export abstract class EmitterBase extends Renderable<RendererUpdateData> {
 
   get colorBuffer(): Readonly<Float32Array> {
     return this.colors
-  }
-
-  get particlesCount() {
-    return this.properties.particlesCount
   }
 
   abstract update(deltaTime: number): void

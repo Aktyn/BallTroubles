@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import { EmitterBase } from '../engine/emitters/emitterBase'
 import { GameMap } from '../engine/gameMap'
+import { LightSource } from '../engine/lights/lightSource'
 import { ObjectBase } from '../engine/objects/objectBase'
 import { ThreeJSParticleSystem } from './particles/ThreeJSParticleSystem'
-import { Renderer } from './renderer'
+import { EnvironmentOptions, Renderer } from './renderer'
 import { ThreeJSResources } from './threeJSResources'
 
 export class ThreeJSRenderer extends Renderer {
@@ -23,26 +24,6 @@ export class ThreeJSRenderer extends Renderer {
     )
 
     this.scene = new THREE.Scene()
-
-    //TODO: synchronize map lights
-    const directionalLight = new THREE.DirectionalLight(
-      new THREE.Color(0xffffff).convertSRGBToLinear(),
-      10,
-    )
-    directionalLight.position.set(1, 1, 2)
-    directionalLight.lookAt(0, 0, 0)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.width = 1024
-    directionalLight.shadow.mapSize.height = 1024
-    directionalLight.shadow.camera.near = 1
-    directionalLight.shadow.camera.far = 5
-    this.scene.add(directionalLight)
-
-    const atmosphereColor = new THREE.Color(0x0d47a1) //.convertLinearToSRGB()
-    const ambientLight = new THREE.AmbientLight(atmosphereColor, 1)
-    this.scene.add(ambientLight)
-    this.scene.fog = new THREE.Fog(atmosphereColor, 0.5, 3)
-    this.scene.background = atmosphereColor
 
     this.internalRenderer = new THREE.WebGLRenderer({
       canvas,
@@ -77,9 +58,34 @@ export class ThreeJSRenderer extends Renderer {
     }
   }
 
+  setupEnvironment(options: Partial<EnvironmentOptions>) {
+    const atmosphereColor = new THREE.Color(options.color ?? 0xffffff)
+    if (options.ambientLight) {
+      const ambientLight = new THREE.AmbientLight(
+        options.ambientLight.color ?? atmosphereColor,
+        options.ambientLight.intensity ?? 1,
+      )
+      this.scene.add(ambientLight)
+    }
+    if (options.fog) {
+      this.scene.fog = new THREE.Fog(
+        options.fog.color ?? atmosphereColor,
+        options.fog.near ?? 0.5,
+        options.fog.far ?? 3,
+      )
+    }
+    if (options.backgroundTexture !== undefined) {
+      this.scene.background = ThreeJSResources.getBackgroundTexture(
+        options.backgroundTexture,
+      )
+    } else if (options.backgroundColor) {
+      this.scene.background = new THREE.Color(options.backgroundColor)
+    }
+  }
+
   private synchronizeMesh(mesh: THREE.Mesh, obj: ObjectBase) {
     mesh.rotation.z = obj.angle
-    mesh.position.set(obj.pos.x, obj.pos.y, obj.pos.z)
+    mesh.position.set(obj.position.x, obj.position.y, obj.position.z)
     mesh.scale.set(obj.scale.x, obj.scale.y, obj.scale.z)
     if (!mesh.matrixAutoUpdate) {
       mesh.updateMatrix()
@@ -88,7 +94,7 @@ export class ThreeJSRenderer extends Renderer {
 
   private synchronizeObject(obj: ObjectBase) {
     const mesh = new THREE.Mesh(
-      ThreeJSResources.getGeometry(obj.properties.shape),
+      ThreeJSResources.getGeometry(obj.properties.type),
       ThreeJSResources.getMaterial(obj.properties.material),
     )
     mesh.receiveShadow = true
@@ -110,6 +116,7 @@ export class ThreeJSRenderer extends Renderer {
     const particleSystem = new ThreeJSParticleSystem(
       emitter,
       this.canvas.height,
+      emitter.properties.frustumCulled,
     )
     particleSystem.setCameraZoom(this.camera.zoom)
     this.threeJSParticleSystems.push(particleSystem)
@@ -132,6 +139,62 @@ export class ThreeJSRenderer extends Renderer {
     })
   }
 
+  private updateLightSource(
+    light: LightSource,
+    threeJSLight: THREE.Light,
+    targetObject: THREE.Object3D,
+  ) {
+    threeJSLight.position.set(
+      light.position.x,
+      light.position.y,
+      light.position.z,
+    )
+
+    targetObject.position.set(
+      light.targetPosition.x,
+      light.targetPosition.y,
+      light.targetPosition.z,
+    )
+
+    const colorHex =
+      ((light.color.x * 255) << 16) |
+      ((light.color.y * 255) << 8) |
+      (light.color.z * 255)
+    threeJSLight.color.set(colorHex)
+  }
+
+  private synchronizeLight(light: LightSource) {
+    //TODO: allow more light types
+    const directionalLight = new THREE.DirectionalLight(
+      new THREE.Color(0xffffff).convertSRGBToLinear(),
+      5,
+    )
+    // directionalLight.position.set(1, 1, 2)
+    // directionalLight.lookAt(0, 0, 0)
+    directionalLight.castShadow = true
+    directionalLight.shadow.mapSize.width = 1024
+    directionalLight.shadow.mapSize.height = 1024
+    directionalLight.shadow.camera.near = 1
+    directionalLight.shadow.camera.far = 5
+
+    const targetObject = new THREE.Object3D()
+    this.scene.add(targetObject)
+    directionalLight.target = targetObject
+
+    this.updateLightSource(light, directionalLight, targetObject)
+    this.scene.add(directionalLight)
+
+    light.synchronizeWithRenderer({
+      onUpdate: () =>
+        this.updateLightSource(light, directionalLight, targetObject),
+      onRemoved: () => {
+        directionalLight.dispose()
+        this.scene.remove(directionalLight)
+        this.scene.remove(targetObject)
+      },
+    })
+  }
+
   render(map: Readonly<GameMap>) {
     //NOTE: background particle emitters should be synchronized before regular objects
     // Synchronize emitters
@@ -146,6 +209,12 @@ export class ThreeJSRenderer extends Renderer {
         this.synchronizeObject(obj)
       }
     }
+    // Synchronize lights
+    for (const light of map.lights) {
+      if (!light.isSynchronizedWithRenderer()) {
+        this.synchronizeLight(light)
+      }
+    }
 
     // Synchronize camera
     this.camera.position.set(
@@ -153,11 +222,20 @@ export class ThreeJSRenderer extends Renderer {
       map.camera.position.y,
       map.camera.position.z,
     )
-    this.camera.rotation.set(
-      map.camera.rotation.x,
-      map.camera.rotation.y,
-      map.camera.rotation.z,
+
+    this.camera.rotation.set(0, 0, 0)
+    this.camera.rotation.x = Math.abs(
+      -Math.atan2(
+        map.camera.targetPosition.y - map.camera.position.y,
+        map.camera.targetPosition.z - map.camera.position.z,
+      ) + Math.PI,
     )
+    const rotZ = -Math.atan2(
+      map.camera.targetPosition.x - map.camera.position.x,
+      map.camera.targetPosition.y - map.camera.position.y,
+    )
+    this.camera.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), rotZ)
+
     if (this.camera.zoom !== map.camera.visibleZoom) {
       this.camera.zoom = map.camera.visibleZoom
       this.camera.updateProjectionMatrix()
@@ -165,7 +243,6 @@ export class ThreeJSRenderer extends Renderer {
         particleSystem.setCameraZoom(map.camera.visibleZoom)
       }
     }
-    // this.camera.lookAt(0, 0, 0)
 
     this.internalRenderer.render(this.scene, this.camera)
   }

@@ -1,15 +1,18 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as THREE from 'three'
 import palette from '../../style/palette.json'
-import { OBJECT_MATERIAL, OBJECT_TYPE } from '../engine/objects/common'
+import {
+  BACKGROUND_TEXTURE,
+  OBJECT_MATERIAL,
+  OBJECT_TYPE,
+} from '../engine/objects/common'
 import { Resources } from './../resources'
 
 const textureLoader = new THREE.TextureLoader()
 
 function setupColorTexture(texture: THREE.Texture) {
   texture.encoding = THREE.sRGBEncoding
-  // texture.wrapS = THREE.RepeatWrapping
-  // texture.wrapT = THREE.RepeatWrapping
+  // texture.wrapS = texture.wrapT = THREE.RepeatWrapping
   // texture.repeat.set(4, 4)
   return texture
 }
@@ -20,7 +23,6 @@ function setupEnvironmentTexture(texture: THREE.Texture) {
   return texture
 }
 
-//TODO: load only when needed, dispose after game ends
 const ThreeJSTextures = {
   particle: {
     star: setupColorTexture(
@@ -28,13 +30,16 @@ const ThreeJSTextures = {
         require('assets/textures/particles/star_particle.png'),
       ),
     ),
+    fire: setupColorTexture(
+      textureLoader.load(
+        require('assets/textures/particles/fire_particle.png'),
+      ),
+    ),
   },
 
   environment: {
-    forest: setupEnvironmentTexture(
-      textureLoader.load(
-        require('assets/textures/environment/je_gray_02_1k.jpg'),
-      ),
+    nebula1: setupEnvironmentTexture(
+      textureLoader.load(require('assets/textures/background/1.jpg')),
     ),
   },
   woodCrate: {
@@ -50,9 +55,14 @@ const ThreeJSTextures = {
       require('assets/textures/crate/Wood_Crate_001_roughness.jpg'),
     ),
   },
-  redEnemy: {
+  enemy: {
     color: setupColorTexture(
-      textureLoader.load(require('assets/textures/red_enemy/enemy.png')),
+      textureLoader.load(require('assets/textures/enemy/enemy.png')),
+    ),
+  },
+  player: {
+    color: setupColorTexture(
+      textureLoader.load(require('assets/textures/player/player.png')),
     ),
   },
 }
@@ -66,13 +76,26 @@ const geometryLoader = (objectType: OBJECT_TYPE) => {
   switch (objectType) {
     default:
     case OBJECT_TYPE.BOX:
-    case OBJECT_TYPE.GROUND_BOX:
+      // case OBJECT_TYPE.GROUND_BOX:
       return BoxGeometry
 
     case OBJECT_TYPE.SMALL_BALL:
       return SphereGeometry
   }
 }
+
+const getDefaultParticleMaterialProperties =
+  (): THREE.ShaderMaterialParameters => ({
+    vertexShader: Resources.shaders.get('particles').vertex,
+    fragmentShader: Resources.shaders.get('particles').fragment,
+
+    blending: THREE.AdditiveBlending,
+    depthTest: false, //? Turn to false on Additive blending
+    depthWrite: false,
+    depthFunc: THREE.NeverDepth,
+    transparent: false, // Not needed for additive blending as long as texture background is black
+    vertexColors: true,
+  })
 
 const materialLoader = (materialType: OBJECT_MATERIAL) => {
   switch (materialType) {
@@ -84,8 +107,8 @@ const materialLoader = (materialType: OBJECT_MATERIAL) => {
         map: ThreeJSTextures.woodCrate.color,
         normalMap: ThreeJSTextures.woodCrate.normal,
         specularMap: ThreeJSTextures.woodCrate.specular,
-        specular: new THREE.Color(0x777777).convertSRGBToLinear(),
-        envMap: ThreeJSTextures.environment.forest,
+        specular: linearWhite, //new THREE.Color(0x777777).convertSRGBToLinear(),
+        envMap: ThreeJSTextures.environment.nebula1,
         reflectivity: 0.5,
         combine: THREE.AddOperation,
       })
@@ -94,30 +117,57 @@ const materialLoader = (materialType: OBJECT_MATERIAL) => {
       return new THREE.MeshPhongMaterial({
         flatShading: false,
         color: new THREE.Color(palette.red['300']).convertSRGBToLinear(),
-        map: ThreeJSTextures.redEnemy.color,
-        envMap: ThreeJSTextures.environment.forest,
+        map: ThreeJSTextures.enemy.color,
+        envMap: ThreeJSTextures.environment.nebula1,
         reflectivity: 0.5,
         combine: THREE.AddOperation,
+      })
+    case OBJECT_MATERIAL.PLAYER:
+      return new THREE.MeshPhongMaterial({
+        flatShading: false,
+        color: new THREE.Color(
+          palette['deep-orange']['400'],
+        ).convertSRGBToLinear(),
+        map: ThreeJSTextures.player.color,
+        // envMap: ThreeJSTextures.environment.nebula1,
+        // reflectivity: 0,
+        // combine: THREE.AddOperation,
+        emissive: new THREE.Color(
+          palette['deep-orange']['700'],
+        ).convertSRGBToLinear(),
       })
 
     case OBJECT_MATERIAL.STAR_PARTICLE:
       return new THREE.ShaderMaterial({
+        ...getDefaultParticleMaterialProperties(),
         uniforms: {
           pointTexture: {
             value: ThreeJSTextures.particle.star,
           },
         },
-        vertexShader: Resources.shaders.get('particles').vertex,
-        fragmentShader: Resources.shaders.get('particles').fragment,
-
-        blending: THREE.AdditiveBlending,
-        depthTest: false, //? Turn to false on Additive blending
-        depthWrite: false,
-        depthFunc: THREE.NeverDepth,
-        transparent: false, // Not needed for additive blending as long as texture background is black
-        // alphaTest: 0.1,
-        vertexColors: true,
       })
+    case OBJECT_MATERIAL.FIRE_PARTICLE:
+      return new THREE.ShaderMaterial({
+        ...getDefaultParticleMaterialProperties(),
+        uniforms: {
+          pointTexture: {
+            value: ThreeJSTextures.particle.fire,
+          },
+        },
+        depthTest: true,
+        depthWrite: false,
+        depthFunc: THREE.LessEqualDepth,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+      })
+  }
+}
+
+const backgroundTextureGetter = (texture: BACKGROUND_TEXTURE) => {
+  switch (texture) {
+    default:
+    case BACKGROUND_TEXTURE.NEBULA_1:
+      return ThreeJSTextures.environment.nebula1
   }
 }
 
@@ -135,9 +185,11 @@ const resourceGetter = <KeyType, ValueType>(
 }
 
 export const ThreeJSResources: {
+  getBackgroundTexture: typeof backgroundTextureGetter
   getGeometry: (shape: OBJECT_TYPE) => THREE.BufferGeometry
   getMaterial: (material: OBJECT_MATERIAL) => THREE.Material
 } = {
+  getBackgroundTexture: backgroundTextureGetter,
   getGeometry: resourceGetter(geometryLoader),
   getMaterial: resourceGetter(materialLoader),
 }

@@ -1,7 +1,7 @@
 import Box2D from '@cocos/box2d'
 
 export class PhysicsWorld {
-  protected readonly world: Box2D.World
+  readonly world: Box2D.World
 
   constructor() {
     const gravity = new Box2D.Vec2(0.0, 0.0)

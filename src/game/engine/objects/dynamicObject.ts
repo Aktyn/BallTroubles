@@ -5,13 +5,16 @@ import { b2BodyType, PhysicsParameters } from '../../physics/utils'
 import { ObjectBase, CommonObjectProperties } from './objectBase'
 
 interface DynamicObjectProperties extends CommonObjectProperties {
+  /** @default 1 */
   restitution?: number
+  /** @default 1 */
   density?: number
+  /** @default 0.5 */
   friction?: number
 }
 
 export class DynamicObject extends ObjectBase {
-  private readonly body: Box2D.Body
+  protected readonly body: Box2D.Body
 
   constructor(
     pos: Vector3,
@@ -22,15 +25,6 @@ export class DynamicObject extends ObjectBase {
 
     this._pos.setV(pos)
 
-    // const fixture = new Box2D.FixtureDef()
-    // fixture.restitution = properties.restitution ?? 0.99
-    // fixture.density = properties.density ?? 1
-    // fixture.friction = properties.friction ?? 0.5
-
-    // const shape = new Box2D.CircleShape(
-    //   this._scale.getAverage() * PhysicsParameters.SCALAR,
-    // )
-
     this.body = world.CreateBody()
     this.body.SetType(
       properties.static ? b2BodyType.b2_staticBody : b2BodyType.b2_dynamicBody,
@@ -39,10 +33,7 @@ export class DynamicObject extends ObjectBase {
     this.body.SetAngularDamping(0)
     this.body.SetPosition(pos.copy().scale(PhysicsParameters.SCALAR).toJSON())
 
-    // const ballShape = new Box2D.CircleShape(
-    //   this._scale.getAverage() * PhysicsParameters.SCALAR,
-    // )
-    const shape = Box2DShapes[this.properties.shape]
+    const shape = Box2DShapes[this.properties.type]
     this.body.CreateFixture(shape, 1)
 
     const bodyFixture = this.body.m_fixtureList
@@ -65,7 +56,7 @@ export class DynamicObject extends ObjectBase {
     super.destroy()
   }
 
-  set speed(value: number) {
+  setLinearVelocity(value: number) {
     this.body.SetLinearVelocity(
       new Box2D.Vec2(
         Math.cos(this._angle) * value * PhysicsParameters.SCALAR,

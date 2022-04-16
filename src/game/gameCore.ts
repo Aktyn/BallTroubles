@@ -1,7 +1,9 @@
 import { SECOND } from '../utils'
 import { GameEngine } from './engine'
+import { KeyboardSteering } from './engine/common/steering'
 import { Renderer } from './graphics/renderer'
 import { GUIController } from './gui'
+import { generateTutorialMap } from './mapGenerators/tutorialMapGenerator'
 import { Resources } from './resources'
 
 const MAX_DELTA_TIME = 0.5
@@ -10,6 +12,7 @@ export class GameCore {
   private readonly gui: GUIController
   private readonly renderer: Renderer
   private readonly engine: GameEngine
+  private steering: KeyboardSteering | null = null
 
   private readonly updateFrame = this.update.bind(this)
 
@@ -31,6 +34,8 @@ export class GameCore {
   destroy() {
     this.renderer.destroy()
     this.engine.destroy()
+    this.steering?.destroy()
+    this.steering = null
     this.running = false
   }
 
@@ -40,8 +45,13 @@ export class GameCore {
       return
     }
 
+    this.steering = new KeyboardSteering()
+
     Resources.onLoadingFinished(() => {
-      console.log(Resources.maps.get('tutorial'))
+      generateTutorialMap(this.engine, this.renderer)
+      if (this.steering) {
+        this.engine.spawnPlayer(this.steering, true)
+      }
     })
 
     this.running = true
