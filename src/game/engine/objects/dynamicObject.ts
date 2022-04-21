@@ -11,6 +11,8 @@ interface DynamicObjectProperties extends CommonObjectProperties {
   density?: number
   /** @default 0.5 */
   friction?: number
+  /** @default false */
+  isSensor?: boolean
 }
 
 export class DynamicObject extends ObjectBase {
@@ -38,6 +40,8 @@ export class DynamicObject extends ObjectBase {
 
     const bodyFixture = this.body.m_fixtureList
     if (bodyFixture) {
+      bodyFixture.m_userData = this
+      bodyFixture.m_isSensor = properties.isSensor ?? false
       bodyFixture.SetDensity(properties.density ?? 1)
       bodyFixture.SetRestitution(properties.restitution ?? 1)
       bodyFixture.SetFriction(properties.friction ?? 0)
@@ -74,12 +78,18 @@ export class DynamicObject extends ObjectBase {
     this.body.SetAngle(value)
   }
 
-  update(_deltaTime: number): void {
+  setPosition(pos: Vector3) {
+    this.body.SetPosition(pos.copy().scale(PhysicsParameters.SCALAR).toJSON())
+    this._pos.setV(pos)
+  }
+
+  update(deltaTime: number): void {
     const bodyPos = this.body.GetPosition()
     this._pos.x = bodyPos.x / PhysicsParameters.SCALAR
     this._pos.y = bodyPos.y / PhysicsParameters.SCALAR
     this._angle = this.body.GetAngle()
 
+    super.update(deltaTime)
     if (!this.properties.static) {
       super.updateRenderer(null)
     }

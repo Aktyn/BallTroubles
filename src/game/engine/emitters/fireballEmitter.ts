@@ -4,11 +4,11 @@ import { ObjectBase } from '../objects/objectBase'
 import { EmitterBase } from './emitterBase'
 
 export class FireballEmitter extends EmitterBase {
-  private static PARTICLE_SIZE_MAX = 100
-  private static PARTICLE_SIZE_MIN = 5
-  private static SHRINKING_SPEED = 1
-  private static SPAWN_RADIUS_OFFSET = -0.2
-  private static BASE_COLOR = [0.5, 0.15, 0]
+  private static PARTICLE_SIZE_MAX = 100 as const
+  private static PARTICLE_SIZE_MIN = 5 as const
+  private static SHRINKING_SPEED = 1 as const
+  private static SPAWN_RADIUS_OFFSET = -0.2 as const
+  private static BASE_COLOR = [0.5, 0.15, 0] as const
 
   private readonly parent: ObjectBase
   private readonly targetPositions: Float32Array
@@ -28,10 +28,6 @@ export class FireballEmitter extends EmitterBase {
   private initialize() {
     for (let i = 0; i < this.properties.particlesCount; i++) {
       this.sizes[i] = randomFloat(0, FireballEmitter.PARTICLE_SIZE_MAX)
-
-      // this.colors[i * 3 + 0] = 0.5
-      // this.colors[i * 3 + 1] = 0.15
-      // this.colors[i * 3 + 2] = 0
     }
     this.colors.fill(0)
     this.positions.fill(1000) //init particles outside of the viewport
@@ -45,8 +41,6 @@ export class FireballEmitter extends EmitterBase {
         FireballEmitter.PARTICLE_SIZE_MAX *
         FireballEmitter.SHRINKING_SPEED
       if (this.sizes[i] <= FireballEmitter.PARTICLE_SIZE_MIN) {
-        // const centerDst = Math.random()
-
         this.sizes[i] +=
           FireballEmitter.PARTICLE_SIZE_MAX - FireballEmitter.PARTICLE_SIZE_MIN
 

@@ -1,7 +1,7 @@
 const EPSILON = 1e-5
 
 abstract class Vector<Length extends number> {
-  protected readonly buffer: Float32Array
+  public readonly buffer: Float32Array
 
   constructor(size: Length) {
     this.buffer = new Float32Array(size)
@@ -14,7 +14,7 @@ abstract class Vector<Length extends number> {
     return this
   }
 
-  setV(vector: Vector<Length>) {
+  setV(vector: Readonly<Vector<Length>>) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] = vector.buffer[i]
     }
@@ -28,21 +28,21 @@ abstract class Vector<Length extends number> {
     return this
   }
 
-  addV(vector: Vector<Length>) {
+  addV(vector: Readonly<Vector<Length>>) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] += vector.buffer[i]
     }
     return this
   }
 
-  subtractV(vector: Vector<Length>) {
+  subtractV(vector: Readonly<Vector<Length>>) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] -= vector.buffer[i]
     }
     return this
   }
 
-  lerp(vector: Vector<Length>, factor: number) {
+  lerp(vector: Readonly<Vector<Length>>, factor: number) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] += (vector.buffer[i] - this.buffer[i]) * factor
     }
@@ -57,11 +57,19 @@ abstract class Vector<Length extends number> {
     return this
   }
 
-  scaleV(vector: Vector<Length>) {
+  scaleV(vector: Readonly<Vector<Length>>) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] *= vector.buffer[i]
     }
     return this
+  }
+
+  equals(vector: Readonly<Vector<Length>>) {
+    for (let i = 0; i < this.buffer.length; i++) {
+      if (this.buffer[i] !== vector.buffer[i]) {
+        return false
+      }
+    }
   }
 
   sumComponents() {
@@ -80,12 +88,16 @@ abstract class Vector<Length extends number> {
     return this.sumComponents() / this.buffer.length
   }
 
-  getLength() {
+  getLengthSquared() {
     let sum = 0
     for (let i = 0; i < this.buffer.length; i++) {
       sum += this.buffer[i] * this.buffer[i]
     }
-    return Math.sqrt(sum)
+    return sum
+  }
+
+  getLength() {
+    return Math.sqrt(this.getLengthSquared())
   }
 
   normalize() {

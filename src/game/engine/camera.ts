@@ -1,9 +1,12 @@
 import { clamp, Vector3 } from '../../utils'
 import { GUIController } from '../gui'
+import { ObjectBase } from './objects/objectBase'
 
 interface CameraProperties {
   targetPositionOffset: Vector3
 }
+
+const vector3Zero = new Vector3(0, 0, 0)
 
 export class GameCamera {
   private static MIN_ZOOM = 0.5
@@ -24,7 +27,7 @@ export class GameCamera {
   private readonly properties: CameraProperties
 
   public readonly position = new Vector3(0, 0, 0)
-  private _targetPosition = new Vector3(0, 0, 0)
+  private _target: ObjectBase | null = null
   private visibleTargetPosition = new Vector3(0, 0, 0)
   private _zoom = 1
   private _visibleZoom = 1
@@ -92,15 +95,15 @@ export class GameCamera {
     return this.visibleTargetPosition
   }
 
-  setTarget(target: Vector3) {
-    this._targetPosition = target
+  setTarget(target: ObjectBase) {
+    this._target = target
   }
 
   update(deltaTime: number) {
-    const targetPos = this._targetPosition
+    const targetPos = this._target?.position
       .copy()
       .addV(this.properties.targetPositionOffset)
-    const diffVec = this.position.copy().subtractV(targetPos)
+    const diffVec = this.position.copy().subtractV(targetPos ?? vector3Zero)
 
     this.position.subtractV(
       diffVec.scale(
@@ -113,7 +116,7 @@ export class GameCamera {
       ),
     )
 
-    const targetDiffVec = this._targetPosition
+    const targetDiffVec = (this._target?.position ?? vector3Zero)
       .copy()
       .subtractV(this.visibleTargetPosition)
     this.visibleTargetPosition.addV(

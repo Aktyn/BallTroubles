@@ -50,8 +50,12 @@ export abstract class EmitterBase
     return this._destroyed
   }
 
-  get position(): Readonly<Vector3> {
+  get position() {
     return this.centerPosition
+  }
+
+  set position(pos: Vector3) {
+    this.centerPosition.setV(pos)
   }
 
   get rotation(): Readonly<Vector3> {

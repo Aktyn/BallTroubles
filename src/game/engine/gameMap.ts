@@ -1,14 +1,18 @@
 import { Vector3 } from '../../utils'
 import { GUIController } from '../gui'
 import { GameCamera } from './camera'
+import { Renderable } from './common/renderable'
 import { EmitterBase } from './emitters/emitterBase'
 import { LightSource } from './lights/lightSource'
+import { Updatable, updateUpdatables } from './objects/common'
 import { ObjectBase } from './objects/objectBase'
 
 export class GameMap {
   private readonly _objects: ObjectBase[] = []
-  private readonly _emitters: EmitterBase[] = []
-  private readonly _lights: LightSource[] = []
+  // private readonly emitters: EmitterBase[] = []
+  // private readonly lights: LightSource[] = []
+  private readonly _updatables: Updatable[] = []
+  private readonly _notSynchronizedRenderables: Renderable<never>[] = []
   public readonly camera: GameCamera
 
   constructor(gui: GUIController) {
@@ -19,61 +23,59 @@ export class GameMap {
 
   destroy() {
     this.camera.destroy()
-    for (const obj of this._objects) {
-      obj.destroy()
-      this._objects.length = 0
+    for (const updatable of this._updatables) {
+      updatable.destroy()
+      this._updatables.length = 0
     }
-    for (const emitter of this._emitters) {
-      emitter.destroy()
-      this._emitters.length = 0
-    }
+    this._notSynchronizedRenderables.length = 0
+    this._objects.length = 0
+    // this.emitters.length = 0
+    // this.lights.length = 0
   }
 
-  get objects(): Readonly<ObjectBase[]> {
+  get notSynchronizedRenderables(): readonly Renderable<never>[] {
+    return this._notSynchronizedRenderables
+  }
+
+  get objects(): readonly ObjectBase[] {
     return this._objects
   }
 
-  get emitters(): Readonly<EmitterBase[]> {
-    return this._emitters
-  }
-
-  get lights(): Readonly<LightSource[]> {
-    return this._lights
+  onRenderablesSynchronized() {
+    this._notSynchronizedRenderables.length = 0
   }
 
   addObject(obj: ObjectBase) {
     this._objects.push(obj)
+    this._updatables.push(obj)
+    if (!obj.isSynchronizedWithRenderer()) {
+      this._notSynchronizedRenderables.push(obj)
+    }
   }
 
   addEmitter(emitter: EmitterBase) {
-    this._emitters.push(emitter)
+    //? this.emitters.push(emitter)
+    this._updatables.push(emitter)
+    if (!emitter.isSynchronizedWithRenderer()) {
+      this._notSynchronizedRenderables.push(emitter)
+    }
   }
 
   addLight(light: LightSource) {
-    this._lights.push(light)
+    //? this.lights.push(light)
+    this._updatables.push(light)
+    if (!light.isSynchronizedWithRenderer()) {
+      this._notSynchronizedRenderables.push(light)
+    }
   }
 
   setCameraTarget(target: ObjectBase) {
-    this.camera.setTarget(target.position)
+    this.camera.setTarget(target)
   }
 
   update(deltaTime: number) {
     this.camera.update(deltaTime)
 
-    for (const updatableObjects of [
-      this._objects,
-      this._emitters,
-      this._lights,
-    ]) {
-      for (let i = 0; i < updatableObjects.length; i++) {
-        const obj = updatableObjects[i]
-        if (obj.destroyed) {
-          updatableObjects.splice(i, 1)
-          i--
-        } else {
-          obj.update(deltaTime)
-        }
-      }
-    }
+    updateUpdatables(this._updatables, deltaTime)
   }
 }

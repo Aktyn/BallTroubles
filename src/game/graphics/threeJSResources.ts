@@ -6,7 +6,7 @@ import {
   OBJECT_MATERIAL,
   OBJECT_TYPE,
 } from '../engine/objects/common'
-import { Resources } from './../resources'
+import { Resources } from '../resources'
 
 const textureLoader = new THREE.TextureLoader()
 
@@ -25,44 +25,49 @@ function setupEnvironmentTexture(texture: THREE.Texture) {
 
 const ThreeJSTextures = {
   particle: {
+    simple: setupColorTexture(
+      textureLoader.load(
+        require('../../assets/textures/particles/simple_particle.jpg'),
+      ),
+    ),
     star: setupColorTexture(
       textureLoader.load(
-        require('assets/textures/particles/star_particle.png'),
+        require('../../assets/textures/particles/star_particle.png'),
       ),
     ),
     fire: setupColorTexture(
       textureLoader.load(
-        require('assets/textures/particles/fire_particle.png'),
+        require('../../assets/textures/particles/fire_particle.png'),
       ),
     ),
   },
 
   environment: {
     nebula1: setupEnvironmentTexture(
-      textureLoader.load(require('assets/textures/background/1.jpg')),
+      textureLoader.load(require('../../assets/textures/background/1.jpg')),
     ),
   },
   woodCrate: {
     color: setupColorTexture(
       textureLoader.load(
-        require('assets/textures/crate/Wood_Crate_001_basecolor.jpg'),
+        require('../../assets/textures/crate/Wood_Crate_001_basecolor.jpg'),
       ),
     ),
     normal: textureLoader.load(
-      require('assets/textures/crate/Wood_Crate_001_normal.jpg'),
+      require('../../assets/textures/crate/Wood_Crate_001_normal.jpg'),
     ),
     specular: textureLoader.load(
-      require('assets/textures/crate/Wood_Crate_001_roughness.jpg'),
+      require('../../assets/textures/crate/Wood_Crate_001_roughness.jpg'),
     ),
   },
   enemy: {
     color: setupColorTexture(
-      textureLoader.load(require('assets/textures/enemy/enemy.png')),
+      textureLoader.load(require('../../assets/textures/enemy/enemy.png')),
     ),
   },
   player: {
     color: setupColorTexture(
-      textureLoader.load(require('assets/textures/player/player.png')),
+      textureLoader.load(require('../../assets/textures/player/player.png')),
     ),
   },
 }
@@ -137,6 +142,15 @@ const materialLoader = (materialType: OBJECT_MATERIAL) => {
         ).convertSRGBToLinear(),
       })
 
+    case OBJECT_MATERIAL.SIMPLE_PARTICLE:
+      return new THREE.ShaderMaterial({
+        ...getDefaultParticleMaterialProperties(),
+        uniforms: {
+          pointTexture: {
+            value: ThreeJSTextures.particle.simple,
+          },
+        },
+      })
     case OBJECT_MATERIAL.STAR_PARTICLE:
       return new THREE.ShaderMaterial({
         ...getDefaultParticleMaterialProperties(),

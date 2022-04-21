@@ -60,8 +60,8 @@ export const Resources = {
     {
       name: 'particles',
       loader: loadShaderSource(
-        require('assets/shaders/particles.fs'),
-        require('assets/shaders/particles.vs'),
+        require('../assets/shaders/particles.fs'),
+        require('../assets/shaders/particles.vs'),
       ),
     },
   ]),

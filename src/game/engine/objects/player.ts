@@ -18,7 +18,7 @@ export class Player extends DynamicObject {
 
   private readonly steering: Steering
   private readonly playerProperties: Required<PlayerProperties>
-  public readonly emitter: EmitterBase
+  private readonly emitter: EmitterBase
 
   constructor(
     steering: Steering,
@@ -29,17 +29,19 @@ export class Player extends DynamicObject {
       type: OBJECT_TYPE.SMALL_BALL,
       material: OBJECT_MATERIAL.PLAYER,
       friction: 0,
+      restitution: 1,
     })
+    this.steering = steering
     this.playerProperties = {
       speed: properties.speed ?? 0.3,
       rotationSpeed: properties.rotationSpeed ?? Math.PI,
     }
-    this.steering = steering
+
     this.emitter = new FireballEmitter(this)
+    this.children.push(this.emitter)
   }
 
   destroy() {
-    this.emitter.destroy()
     super.destroy()
   }
 

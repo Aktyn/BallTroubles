@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { Renderable } from '../engine/common/renderable'
 import { EmitterBase } from '../engine/emitters/emitterBase'
 import { GameMap } from '../engine/gameMap'
 import { LightSource } from '../engine/lights/lightSource'
@@ -30,17 +31,17 @@ export class ThreeJSRenderer extends Renderer {
       // antialias: true,
       alpha: false,
       premultipliedAlpha: false,
-      depth: false,
+      // depth: false,
       // stencil: false,
       powerPreference: 'high-performance',
       precision: 'lowp',
     })
     this.internalRenderer.pixelRatio = 1 //TODO: test it on mobile
-    this.internalRenderer.shadowMap.enabled = true
-    this.internalRenderer.shadowMap.type = THREE.PCFSoftShadowMap
-    this.internalRenderer.sortObjects = false
+    // this.internalRenderer.shadowMap.enabled = true
+    // this.internalRenderer.shadowMap.type = THREE.PCFSoftShadowMap
+    // this.internalRenderer.sortObjects = false
 
-    this.internalRenderer.physicallyCorrectLights = true
+    // this.internalRenderer.physicallyCorrectLights = true
     this.internalRenderer.outputEncoding = THREE.sRGBEncoding
   }
 
@@ -71,7 +72,7 @@ export class ThreeJSRenderer extends Renderer {
       this.scene.fog = new THREE.Fog(
         options.fog.color ?? atmosphereColor,
         options.fog.near ?? 0.5,
-        options.fog.far ?? 3,
+        options.fog.far ?? 2,
       )
     }
     if (options.backgroundTexture !== undefined) {
@@ -93,6 +94,11 @@ export class ThreeJSRenderer extends Renderer {
   }
 
   private synchronizeObject(obj: ObjectBase) {
+    // Skip non renderable objects
+    if (obj.properties.material === undefined) {
+      return
+    }
+
     const mesh = new THREE.Mesh(
       ThreeJSResources.getGeometry(obj.properties.type),
       ThreeJSResources.getMaterial(obj.properties.material),
@@ -171,9 +177,10 @@ export class ThreeJSRenderer extends Renderer {
     )
     // directionalLight.position.set(1, 1, 2)
     // directionalLight.lookAt(0, 0, 0)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.width = 1024
-    directionalLight.shadow.mapSize.height = 1024
+
+    // directionalLight.castShadow = true
+    // directionalLight.shadow.mapSize.width = 1024
+    // directionalLight.shadow.mapSize.height = 1024
     directionalLight.shadow.camera.near = 1
     directionalLight.shadow.camera.far = 5
 
@@ -195,26 +202,49 @@ export class ThreeJSRenderer extends Renderer {
     })
   }
 
+  private synchronizeRenderableObjects(
+    renderables: readonly Renderable<never>[],
+  ) {
+    for (const renderable of renderables) {
+      if (renderable instanceof EmitterBase) {
+        this.synchronizeEmitter(renderable)
+      } else if (renderable instanceof LightSource) {
+        this.synchronizeLight(renderable)
+      } else if (renderable instanceof ObjectBase) {
+        this.synchronizeObject(renderable)
+      }
+      if (renderable instanceof ObjectBase && renderable.children.length) {
+        this.synchronizeRenderableObjects(
+          (renderable.children as unknown[]).filter(
+            (child) => child instanceof Renderable,
+          ) as Renderable<never>[],
+        )
+      }
+    }
+  }
+
   render(map: Readonly<GameMap>) {
-    //NOTE: background particle emitters should be synchronized before regular objects
-    // Synchronize emitters
-    for (const emitter of map.emitters) {
-      if (!emitter.isSynchronizedWithRenderer()) {
-        this.synchronizeEmitter(emitter)
-      }
-    }
-    // Synchronize objects
-    for (const obj of map.objects) {
-      if (!obj.isSynchronizedWithRenderer()) {
-        this.synchronizeObject(obj)
-      }
-    }
-    // Synchronize lights
-    for (const light of map.lights) {
-      if (!light.isSynchronizedWithRenderer()) {
-        this.synchronizeLight(light)
-      }
-    }
+    // //NOTE: background particle emitters should be synchronized before regular objects
+    // // Synchronize emitters
+    // for (const emitter of map.emitters) {
+    //   if (!emitter.isSynchronizedWithRenderer()) {
+    //     this.synchronizeEmitter(emitter)
+    //   }
+    // }
+    // // Synchronize objects
+    // for (const obj of map.objects) {
+    //   if (!obj.isSynchronizedWithRenderer()) {
+    //     this.synchronizeObject(obj)
+    //   }
+    // }
+    // // Synchronize lights
+    // for (const light of map.lights) {
+    //   if (!light.isSynchronizedWithRenderer()) {
+    //     this.synchronizeLight(light)
+    //   }
+    // }
+    this.synchronizeRenderableObjects(map.notSynchronizedRenderables)
+    map.onRenderablesSynchronized()
 
     // Synchronize camera
     this.camera.position.set(

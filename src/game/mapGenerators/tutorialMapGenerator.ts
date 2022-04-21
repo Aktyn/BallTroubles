@@ -7,6 +7,7 @@ import {
   BACKGROUND_TEXTURE,
 } from '../engine/objects/common'
 import { DynamicObject } from '../engine/objects/dynamicObject'
+import { Portal } from '../engine/objects/portal'
 import { MapGenerator } from './common'
 
 export const generateTutorialMap: MapGenerator = (engine, renderer) => {
@@ -18,10 +19,40 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
     },
     fog: {
       near: 0.5,
-      far: 3,
+      far: 2,
     },
     backgroundTexture: BACKGROUND_TEXTURE.NEBULA_1,
   })
+
+  // Background particles (should be added before all objects)
+  engine.map.addEmitter(
+    new StarsEmitter({
+      xRotationSpeed: 1,
+      yRotationSpeed: 2,
+      zRotationSpeed: 3,
+    }),
+  )
+  engine.map.addEmitter(
+    new StarsEmitter({
+      xRotationSpeed: -1,
+      yRotationSpeed: -2,
+      zRotationSpeed: -3,
+    }),
+  )
+  engine.map.addEmitter(
+    new StarsEmitter({
+      xRotationSpeed: 3,
+      yRotationSpeed: 2,
+      zRotationSpeed: 1,
+    }),
+  )
+  engine.map.addEmitter(
+    new StarsEmitter({
+      xRotationSpeed: -3,
+      yRotationSpeed: -2,
+      zRotationSpeed: -1,
+    }),
+  )
 
   // Temp wall
   for (let x = -10; x <= 10; x++) {
@@ -54,7 +85,7 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
   // this.map.addObject(floorObj)
 
   // Some dummy objects for tests
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 0; i++) {
     const obj = new DynamicObject(
       new Vector3(randomFloat(-0.9, 0.9), randomFloat(-0.9, 0.9), 0),
       engine.world,
@@ -70,35 +101,11 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
     engine.map.addObject(obj)
   }
 
-  // Particles test
-  engine.map.addEmitter(
-    new StarsEmitter({
-      xRotationSpeed: 1,
-      yRotationSpeed: 2,
-      zRotationSpeed: 3,
-    }),
-  )
-  engine.map.addEmitter(
-    new StarsEmitter({
-      xRotationSpeed: -1,
-      yRotationSpeed: -2,
-      zRotationSpeed: -3,
-    }),
-  )
-  engine.map.addEmitter(
-    new StarsEmitter({
-      xRotationSpeed: 3,
-      yRotationSpeed: 2,
-      zRotationSpeed: 1,
-    }),
-  )
-  engine.map.addEmitter(
-    new StarsEmitter({
-      xRotationSpeed: -3,
-      yRotationSpeed: -2,
-      zRotationSpeed: -1,
-    }),
-  )
+  engine.map.addObject(new Portal(new Vector3(0.5, 0.5, 0), engine.world, 0))
+  engine.map.addObject(new Portal(new Vector3(-0.5, -0.5, 0), engine.world, 0))
+
+  engine.map.addObject(new Portal(new Vector3(-0.5, 0.5, 0), engine.world, 1))
+  engine.map.addObject(new Portal(new Vector3(0.5, -0.5, 0), engine.world, 1))
 
   // Setup lights
   const sun = new SunLight(new Vector3(1, 1, 2))

@@ -5,6 +5,7 @@ import {
   OBJECT_MATERIAL,
   OBJECT_TYPE,
   Updatable,
+  updateUpdatables,
 } from './common'
 
 export interface CommonObjectProperties {
@@ -14,7 +15,8 @@ export interface CommonObjectProperties {
 }
 
 export abstract class ObjectBase extends Renderable<null> implements Updatable {
-  public readonly properties: Readonly<Required<CommonObjectProperties>>
+  public readonly properties: Readonly<CommonObjectProperties>
+  public readonly children: Updatable[] = []
 
   private _destroyed = false
   protected readonly _pos = new Vector3()
@@ -25,7 +27,7 @@ export abstract class ObjectBase extends Renderable<null> implements Updatable {
     super()
     this.properties = {
       type: properties.type ?? OBJECT_TYPE.BOX,
-      material: properties.material ?? OBJECT_MATERIAL.WOODEN_CRATE,
+      material: properties.material,
       static: properties.static ?? false,
     }
 
@@ -34,6 +36,9 @@ export abstract class ObjectBase extends Renderable<null> implements Updatable {
 
   destroy() {
     super.destroy()
+    for (const child of this.children) {
+      child.destroy()
+    }
     this._destroyed = true
   }
 
@@ -41,15 +46,17 @@ export abstract class ObjectBase extends Renderable<null> implements Updatable {
     return this._destroyed
   }
 
-  abstract update(deltaTime: number): void
+  update(deltaTime: number) {
+    updateUpdatables(this.children, deltaTime)
+  }
 
-  get position() {
+  get position(): Readonly<Vector3> {
     return this._pos
   }
-  get scale() {
+  get scale(): Readonly<Vector3> {
     return this._scale
   }
-  get angle() {
+  get angle(): number {
     return this._angle
   }
 }

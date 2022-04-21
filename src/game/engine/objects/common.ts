@@ -9,7 +9,7 @@ export interface Updatable {
 export enum OBJECT_TYPE {
   SMALL_BALL,
   BOX,
-  // GROUND_BOX,
+  PORTAL,
 }
 
 export enum OBJECT_MATERIAL {
@@ -18,6 +18,7 @@ export enum OBJECT_MATERIAL {
   PLAYER,
 
   // PARTICLE MATERIALS
+  SIMPLE_PARTICLE,
   STAR_PARTICLE,
   FIRE_PARTICLE,
 }
@@ -35,7 +36,19 @@ export const DefaultProperties: {
   [OBJECT_TYPE.BOX]: {
     scale: new Vector3(0.1, 0.1, 0.1),
   },
-  // [OBJECT_TYPE.GROUND_BOX]: {
-  //   scale: new Vector3(2, 2, 0.1),
-  // },
+  [OBJECT_TYPE.PORTAL]: {
+    scale: new Vector3(0.1, 0.1, 0.1),
+  },
+}
+
+export function updateUpdatables(updatables: Updatable[], deltaTime: number) {
+  for (let i = 0; i < updatables.length; i++) {
+    const obj = updatables[i]
+    if (obj.destroyed) {
+      updatables.splice(i, 1)
+      i--
+    } else {
+      obj.update(deltaTime)
+    }
+  }
 }

@@ -11,12 +11,8 @@ export const Box2DShapes: { [key in OBJECT_TYPE]: Box2D.Shape } = {
     DefaultProperties[OBJECT_TYPE.BOX].scale.x * 0.5 * PhysicsParameters.SCALAR,
     DefaultProperties[OBJECT_TYPE.BOX].scale.y * 0.5 * PhysicsParameters.SCALAR,
   ),
-  // [OBJECT_TYPE.GROUND_BOX]: new Box2D.PolygonShape().SetAsBox(
-  //   DefaultProperties[OBJECT_TYPE.GROUND_BOX].scale.x *
-  //     0.5 *
-  //     PhysicsParameters.SCALAR,
-  //   DefaultProperties[OBJECT_TYPE.GROUND_BOX].scale.y *
-  //     0.5 *
-  //     PhysicsParameters.SCALAR,
-  // ),
+  [OBJECT_TYPE.PORTAL]: new Box2D.CircleShape(
+    DefaultProperties[OBJECT_TYPE.PORTAL].scale?.getAverage() *
+      PhysicsParameters.SCALAR,
+  ),
 }
