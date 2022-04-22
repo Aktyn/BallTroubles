@@ -1,4 +1,4 @@
-@import './palette.scss';
+@import "./palette.scss";
 
 * {
   box-sizing: border-box;
@@ -10,9 +10,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  // background-color: $md-light-blue-900;
   background-color: $md-black;
   color: $md-white;
+}
+
+// Hack for disabling error overlay
+iframe {
+  display: none;
 }
 
 code {
@@ -23,14 +27,78 @@ button {
   cursor: pointer;
   outline: none;
   color: #fff;
+  border: 1px solid $md-light-blue-200;
+  border-radius: 4px;
+  background-color: rgba($md-light-blue-400, 0.5);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px 8px;
+  box-shadow: 0 2px 4px #0004;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  transition: background-color 0.2s ease-in-out;
+  &:not(:disabled):hover {
+    background-color: rgba($md-light-blue-300, 0.75);
+  }
+
+  &:disabled {
+    cursor: auto;
+    background-color: rgba($md-grey-400, 0.5);
+    border-color: $md-grey-200;
+  }
 }
 
 .flex {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+
+  &.nowrap {
+    flex-wrap: nowrap;
+  }
+  &:not(.nowrap) {
+    flex-wrap: wrap;
+  }
 }
 
 .gap-8 {
   gap: 8px;
+}
+
+.tooltip {
+  $bg: rgba($md-blue-grey-400, 0.8);
+  $borderColor: $md-blue-grey-200;
+
+  background-color: $bg !important;
+  border-color: $borderColor !important;
+  box-shadow: 0 2px 4px #0004;
+  &.place-bottom::before {
+    border-bottom-color: $borderColor !important;
+  }
+  &.place-bottom::after {
+    border-bottom-color: $bg !important;
+  }
+
+  &.place-top::before {
+    border-top-color: $borderColor !important;
+  }
+  &.place-top::after {
+    border-top-color: $bg !important;
+  }
+
+  &.place-left::before {
+    border-left-color: $borderColor !important;
+  }
+  &.place-left::after {
+    border-left-color: $bg !important;
+  }
+
+  &.place-right::before {
+    border-right-color: $borderColor !important;
+  }
+  &.place-right::after {
+    border-right-color: $bg !important;
+  }
 }

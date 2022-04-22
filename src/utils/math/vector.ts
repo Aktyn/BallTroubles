@@ -115,6 +115,7 @@ abstract class Vector<Length extends number> {
   }
 }
 
+// eslint-disable-next-line i18next/no-literal-string
 const availablePropertyNames = ['x', 'y', 'z', 'w'] as const
 
 // type ArrayLengthMutationKeys = 'splice' | 'push' | 'pop' | 'shift' | 'unshift'

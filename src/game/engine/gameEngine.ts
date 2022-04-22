@@ -39,40 +39,35 @@ export class GameEngine extends PhysicsWorld {
     return player
   }
 
-  private onPlayerPortalCollision(player: Player, portal: Portal) {
-    const exitPortal = this.map.objects.find(
-      (obj) =>
-        obj instanceof Portal &&
-        obj !== portal &&
-        obj.groupNumber === portal.groupNumber,
-    )
-    if (!exitPortal) {
-      console.warn(`No exit portal found. Group number: ${portal.groupNumber}`)
-      return
-    }
-    portal.teleport(player, exitPortal as Portal)
-  }
-  private onPlayerPortalCollisionEnd(player: Player, portal: Portal) {
-    portal.objectLeftTeleport(player)
-  }
-
-  onCollisionStart(objectA: ObjectBase, objectB: ObjectBase): void {
+  onCollisionStart(objectA: ObjectBase, objectB: ObjectBase) {
+    // Player enters portal
     objectsAreInstancesOf(
       objectA,
       objectB,
       Player,
       Portal,
-      this.onPlayerPortalCollision.bind(this),
+      (player, portal) => {
+        const exitPortal = this.map.objects.find(
+          (obj) =>
+            obj instanceof Portal &&
+            obj !== portal &&
+            obj.groupNumber === portal.groupNumber,
+        )
+        if (!exitPortal) {
+          console.warn(
+            `No exit portal found. Group number: ${portal.groupNumber}`,
+          )
+          return
+        }
+        portal.teleport(player, exitPortal as Portal)
+      },
     )
   }
 
-  onCollisionEnd(objectA: ObjectBase, objectB: ObjectBase): void {
-    objectsAreInstancesOf(
-      objectA,
-      objectB,
-      Player,
-      Portal,
-      this.onPlayerPortalCollisionEnd.bind(this),
+  onCollisionEnd(objectA: ObjectBase, objectB: ObjectBase) {
+    // Player exits portal
+    objectsAreInstancesOf(objectA, objectB, Player, Portal, (player, portal) =>
+      portal.objectLeftTeleport(player),
     )
   }
 }

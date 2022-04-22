@@ -1,46 +1,57 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import ReactTooltip from 'react-tooltip'
+import { GAME_MAP, GAME_MODE } from 'utils'
+import { AppContext } from './context/appContext'
+import { useStorageState } from './hooks/useStorageState'
+import { GameView } from './views/game/GameView'
+import { MenuView } from './views/menu/MenuView'
 
-import { GameCore } from './game/gameCore'
-import { ThreeJSRenderer } from './game/graphics/threeJSRenderer'
-import { GUI, GUIController } from './game/gui'
-import { Resources } from './game/resources'
+enum VIEW {
+  MENU,
+  GAME,
+}
 
-import './App.scss'
+const View = () => {
+  const [t] = useTranslation()
 
-function App() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const guiRef = useRef<GUIController | null>(null)
+  const [view, setView] = useState(VIEW.MENU)
+  const [gameMode, setGameMode] = useState<GAME_MODE | null>(null)
+  const [gameMap, setGameMap] = useState<GAME_MAP | null>(null)
 
-  const startGame = useCallback(() => {
-    if (!canvasRef.current) {
-      throw new Error('No canvas found')
-    }
-    if (!guiRef.current) {
-      throw new Error('No gui found')
-    }
+  const handleGameStart = (mode: GAME_MODE, map: GAME_MAP) => {
+    setGameMode(mode)
+    setGameMap(map)
+    setView(VIEW.GAME)
+  }
 
-    try {
-      const renderer = new ThreeJSRenderer(canvasRef.current)
-      const gameCore = new GameCore(renderer, guiRef.current)
-      gameCore.startGame()
+  switch (view) {
+    default:
+      return <div>{t('error:incorrectView')}</div>
+    case VIEW.MENU:
+      return <MenuView onStartGame={handleGameStart} />
+    case VIEW.GAME:
+      return gameMode !== null && gameMap !== null ? (
+        <GameView mode={gameMode} map={gameMap} />
+      ) : (
+        <div>{t('error:noGameModeOrMapChosen')}</div>
+      )
+  }
+}
 
-      return () => {
-        gameCore.destroy()
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }, [])
-
-  useEffect(() => {
-    Resources.onLoadingFinished(startGame)
-  }, [startGame])
+const App = () => {
+  const [username, setUsername] = useStorageState('username', '')
 
   return (
-    <div className="game-layout">
-      <canvas ref={canvasRef} />
-      <GUI ref={guiRef} />
-    </div>
+    <AppContext.Provider
+      value={{
+        username,
+        setUsername,
+      }}
+    >
+      <View />
+      <ReactTooltip multiline border className="tooltip" />
+    </AppContext.Provider>
   )
 }
 

@@ -1,6 +1,6 @@
-import { SECOND } from '../utils'
-import { GameEngine } from './engine'
+import { SECOND, GAME_MAP, GAME_MODE } from '../utils'
 import { KeyboardSteering } from './engine/common/steering'
+import { GameEngine } from './engine/gameEngine'
 import { Renderer } from './graphics/renderer'
 import { GUIController } from './gui'
 import { generateTutorialMap } from './mapGenerators/tutorialMapGenerator'
@@ -11,7 +11,7 @@ const MAX_DELTA_TIME = 0.5
 export class GameCore {
   private readonly gui: GUIController
   private readonly renderer: Renderer
-  private readonly engine: GameEngine
+  private engine: GameEngine | null = null
   private steering: KeyboardSteering | null = null
 
   private readonly updateFrame = this.update.bind(this)
@@ -24,7 +24,6 @@ export class GameCore {
   constructor(renderer: Renderer, gui: GUIController) {
     this.gui = gui
     this.renderer = renderer
-    this.engine = new GameEngine(gui)
 
     Resources.onLoadingFinished(() => {
       this.gui.setLoadingResources(false)
@@ -33,21 +32,32 @@ export class GameCore {
 
   destroy() {
     this.renderer.destroy()
-    this.engine.destroy()
+
+    this.engine?.destroy()
+    this.engine = null
+
     this.steering?.destroy()
     this.steering = null
+
     this.running = false
   }
 
-  startGame() {
+  startGame(mode: GAME_MODE, map: GAME_MAP) {
     if (this.running) {
       console.warn('Game is already running')
       return
     }
 
     this.steering = new KeyboardSteering()
+    //TODO: start specific game engine according to mode
+    console.log('Starting game mode:', mode)
+    this.engine = new GameEngine(this.gui)
 
     Resources.onLoadingFinished(() => {
+      if (!this.engine) {
+        throw new Error('Engine is not initialized')
+      }
+      console.log('Loading map:', map) //TODO: switch map generators according to map parameter
       generateTutorialMap(this.engine, this.renderer)
       if (this.steering) {
         this.engine.spawnPlayer(this.steering, true)
@@ -59,6 +69,11 @@ export class GameCore {
   }
 
   private update(time: number) {
+    if (!this.engine) {
+      console.error('Engine is not initialized')
+      return
+    }
+
     const deltaTime = (time - this.previousTime) / 1000
     if (((time / SECOND) | 0) > ((this.previousTime / SECOND) | 0)) {
       this.gui.setFPS(this.frameCounter)

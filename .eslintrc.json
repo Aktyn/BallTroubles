@@ -10,7 +10,8 @@
     "plugin:prettier/recommended",
     "plugin:import/recommended",
     "plugin:react-hooks/recommended",
-    "plugin:react/jsx-runtime"
+    "plugin:react/jsx-runtime",
+    "plugin:i18next/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -23,7 +24,8 @@
   "plugins": [
     "react",
     "@typescript-eslint",
-    "prettier"
+    "prettier",
+    "i18next"
   ],
   "globals": {
     "fetch": true
@@ -40,7 +42,13 @@
         "varsIgnorePattern": "^_"
       }
     ],
-    "indent": ["error", 2, { "SwitchCase": 1 }],
+    "indent": [
+      "error",
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
     "linebreak-style": [
       "error",
       "unix"
@@ -94,6 +102,14 @@
         ],
         "newlines-between": "ignore",
         "warnOnUnassignedImports": false
+      }
+    ],
+    "i18next/no-literal-string": [
+      "error",
+      {
+        "validateTemplate": false,
+        "ignoreCallee": ["*"],
+        "ignoreAttribute": ["size"]
       }
     ]
   }

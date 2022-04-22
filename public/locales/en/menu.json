@@ -1,0 +1,30 @@
+{
+  "startGame": "Start Game",
+  "username": "Username",
+  "form": {
+    "selectUsername": "Select username"
+  },
+  "category": {
+    "play": "Let's play!",
+    "otherOptions": "Other options"
+  },
+  "highscores": {
+    "title": "Highscores",
+    "shortInfo": "You can see your best scores here"
+  },
+  "gameMode": {
+    "campaign": {
+      "title": "Campaign",
+      "shortInfo": "Play through a series of levels!\nAchieve highest scores possible!"
+    },
+    "survival": {
+      "title": "Survival",
+      "shortInfo": "Survive as long as you can!\nIt gets harder over time."
+    },
+    "tutorial": {
+      "title": "Tutorial",
+      "shortInfo": "Learn how to play the game!"
+    }
+  },
+  "bestResult": "Best result"
+}

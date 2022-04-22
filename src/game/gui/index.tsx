@@ -1,9 +1,18 @@
 import EventEmitter from 'events'
-import { useImperativeHandle, forwardRef, useState, useRef } from 'react'
+import {
+  useImperativeHandle,
+  forwardRef,
+  useState,
+  useRef,
+  useContext,
+} from 'react'
 import { mdiDevTo, mdiMinus, mdiPlus } from '@mdi/js'
 import Icon from '@mdi/react'
+import { useTranslation } from 'react-i18next'
 import { IconButton } from '../../components/IconButton'
+import { AppContext } from '../../context/appContext'
 import { Resources } from '../resources'
+
 import './gui.scss'
 
 declare interface GUIEventEmitter {
@@ -26,6 +35,9 @@ export interface GUIController {
 }
 
 export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
+  const app = useContext(AppContext)
+  const [t] = useTranslation()
+
   const emitterRef = useRef<GUIEventEmitter>(new GUIEventEmitter())
 
   const [fps, setFPS] = useState(0)
@@ -43,6 +55,10 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
     <div className="gui-main">
       <div className="left-panel">
         {loadingResources && <div>Loading resources...</div>}
+        <div>
+          {t('menu:username')}:&nbsp;
+          <strong>{app.username}</strong>
+        </div>
         <div>
           FPS: <strong>{Math.round(fps)}</strong>
         </div>

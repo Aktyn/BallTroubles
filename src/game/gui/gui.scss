@@ -15,22 +15,9 @@
     width: 256px;
     max-width: 100%;
     border-right: 1px solid $md-light-blue-400;
-  }
 
-  .sidebar-button {
-    color: #fff;
-    border: 1px solid $md-light-blue-200;
-    border-radius: 4px;
-    background-color: rgba($md-light-blue-400, 0.5);
-    font-size: 14px;
-    font-weight: bold;
-    padding: 4px 8px;
-    box-shadow: 0 2px 4px #0004;
-    
-    transition: background-color 0.2s ease-in-out;
-    
-    &:hover {
-      background-color: rgba($md-light-blue-300, 0.75);
-    }
+    display: flex;
+    flex-direction: column;
+    row-gap: 4px;
   }
 }
