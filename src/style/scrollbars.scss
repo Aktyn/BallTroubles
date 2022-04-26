@@ -1,0 +1,24 @@
+@import "./palette.scss";
+
+$scrollbarWidth: 6px;
+
+::-webkit-scrollbar {
+  width: $scrollbarWidth;
+}
+
+::-webkit-scrollbar-track {
+  background-color: rgba($md-blue-300, 0.5);
+  border-radius: $scrollbarWidth;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: $md-blue-300;
+  border-radius: $scrollbarWidth;
+
+  &:hover {
+    background-color: $md-blue-200;
+  }
+  &:active {
+    background-color: $md-red-200;
+  }
+}

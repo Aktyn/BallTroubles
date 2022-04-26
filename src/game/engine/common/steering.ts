@@ -1,6 +1,8 @@
 export abstract class Steering {
   left = false
   right = false
+  up = false
+  down = false
 
   abstract destroy(): void
 }
@@ -36,6 +38,14 @@ export class KeyboardSteering extends Steering {
       case 'ArrowRight':
       case 'KeyD':
         this.right = down
+        break
+      case 'ArrowUp':
+      case 'KeyW':
+        this.up = down
+        break
+      case 'ArrowDown':
+      case 'KeyS':
+        this.down = down
         break
     }
   }

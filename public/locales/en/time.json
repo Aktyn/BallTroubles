@@ -1,0 +1,9 @@
+{
+  "shortUnit": {
+    "millisecond": "ms",
+    "second": "s",
+    "minute": "m",
+    "hour": "h",
+    "day": "d"
+  }
+}

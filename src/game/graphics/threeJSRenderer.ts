@@ -14,6 +14,8 @@ export class ThreeJSRenderer extends Renderer {
   private readonly camera: THREE.PerspectiveCamera
   private readonly threeJSParticleSystems: ThreeJSParticleSystem[] = []
 
+  private synchronizing = false
+
   constructor(canvas: HTMLCanvasElement) {
     super(canvas)
 
@@ -93,15 +95,15 @@ export class ThreeJSRenderer extends Renderer {
     }
   }
 
-  private synchronizeObject(obj: ObjectBase) {
+  private async synchronizeObject(obj: ObjectBase) {
     // Skip non renderable objects
     if (obj.properties.material === undefined) {
       return
     }
 
     const mesh = new THREE.Mesh(
-      ThreeJSResources.getGeometry(obj.properties.type),
-      ThreeJSResources.getMaterial(obj.properties.material),
+      await ThreeJSResources.getGeometry(obj.properties.type),
+      await ThreeJSResources.getMaterial(obj.properties.material),
     )
     mesh.receiveShadow = true
     mesh.castShadow = true
@@ -118,9 +120,10 @@ export class ThreeJSRenderer extends Renderer {
     })
   }
 
-  private synchronizeEmitter(emitter: EmitterBase) {
+  private async synchronizeEmitter(emitter: EmitterBase) {
     const particleSystem = new ThreeJSParticleSystem(
       emitter,
+      await ThreeJSResources.getMaterial(emitter.properties.material),
       this.canvas.height,
       emitter.properties.frustumCulled,
     )
@@ -202,19 +205,19 @@ export class ThreeJSRenderer extends Renderer {
     })
   }
 
-  private synchronizeRenderableObjects(
+  private async synchronizeRenderableObjects(
     renderables: readonly Renderable<never>[],
   ) {
     for (const renderable of renderables) {
       if (renderable instanceof EmitterBase) {
-        this.synchronizeEmitter(renderable)
+        await this.synchronizeEmitter(renderable)
       } else if (renderable instanceof LightSource) {
         this.synchronizeLight(renderable)
       } else if (renderable instanceof ObjectBase) {
-        this.synchronizeObject(renderable)
+        await this.synchronizeObject(renderable)
       }
       if (renderable instanceof ObjectBase && renderable.children.length) {
-        this.synchronizeRenderableObjects(
+        await this.synchronizeRenderableObjects(
           (renderable.children as unknown[]).filter(
             (child) => child instanceof Renderable,
           ) as Renderable<never>[],
@@ -224,27 +227,15 @@ export class ThreeJSRenderer extends Renderer {
   }
 
   render(map: Readonly<GameMap>) {
-    // //NOTE: background particle emitters should be synchronized before regular objects
-    // // Synchronize emitters
-    // for (const emitter of map.emitters) {
-    //   if (!emitter.isSynchronizedWithRenderer()) {
-    //     this.synchronizeEmitter(emitter)
-    //   }
-    // }
-    // // Synchronize objects
-    // for (const obj of map.objects) {
-    //   if (!obj.isSynchronizedWithRenderer()) {
-    //     this.synchronizeObject(obj)
-    //   }
-    // }
-    // // Synchronize lights
-    // for (const light of map.lights) {
-    //   if (!light.isSynchronizedWithRenderer()) {
-    //     this.synchronizeLight(light)
-    //   }
-    // }
-    this.synchronizeRenderableObjects(map.notSynchronizedRenderables)
-    map.onRenderablesSynchronized()
+    if (!this.synchronizing) {
+      this.synchronizing = true
+      this.synchronizeRenderableObjects(map.notSynchronizedRenderables).finally(
+        () => {
+          map.onRenderablesSynchronized()
+          this.synchronizing = false
+        },
+      )
+    }
 
     // Synchronize camera
     this.camera.position.set(

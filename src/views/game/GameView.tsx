@@ -1,40 +1,72 @@
-import { useRef, useCallback, useEffect } from 'react'
-import { GameCore } from '../../game/gameCore'
+import { useRef, useEffect, useContext } from 'react'
+import { AppContext } from '../../context/appContext'
+import { CampaignGameMode } from '../../game/campaignGameMode'
 import { ThreeJSRenderer } from '../../game/graphics/threeJSRenderer'
 import { GUIController, GUI } from '../../game/gui'
-import { Resources } from '../../game/resources'
+import { SurvivalGameMode } from '../../game/survivalGameMode'
+import { TutorialGameMode } from '../../game/tutorialGameMode'
 import { GAME_MODE, GAME_MAP } from '../../utils'
 
 import './GameView.scss'
 
-export const GameView = ({ mode, map }: { mode: GAME_MODE; map: GAME_MAP }) => {
+interface GameViewProps {
+  mode: GAME_MODE
+  map: GAME_MAP
+  onExit: () => void
+}
+
+export const GameView = ({ mode, map, onExit }: GameViewProps) => {
+  const app = useContext(AppContext)
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const guiRef = useRef<GUIController | null>(null)
 
-  const startGame = useCallback(() => {
+  useEffect(() => {
     if (!canvasRef.current) {
       throw new Error('No canvas found')
     }
-    if (!guiRef.current) {
+    const gui = guiRef.current
+    if (!gui) {
       throw new Error('No gui found')
     }
 
+    gui.events.on('exit-game', onExit)
+
     try {
       const renderer = new ThreeJSRenderer(canvasRef.current)
-      const gameCore = new GameCore(renderer, guiRef.current)
-      gameCore.startGame(mode, map)
+      const gameCore =
+        mode === GAME_MODE.TUTORIAL
+          ? new TutorialGameMode(app, renderer, gui)
+          : mode === GAME_MODE.CAMPAIGN
+          ? new CampaignGameMode(app, renderer, gui)
+          : mode === GAME_MODE.SURVIVAL
+          ? new SurvivalGameMode(app, renderer, gui)
+          : null
+
+      if (!gameCore) {
+        throw new Error('Incorrect game mode')
+      }
+
+      gui.setGameMode(mode)
+      gui.setGameMap(map)
+      gameCore.startGame(map)
+
+      const onRepeat = () => {
+        gameCore.restartGame(map)
+      }
+
+      gui.events.on('repeat-game', onRepeat)
 
       return () => {
         gameCore.destroy()
+        gui.events.off('exit-game', onExit)
+        gui.events.off('repeat-game', onRepeat)
       }
     } catch (e) {
       console.error(e)
     }
-  }, [map, mode])
-
-  useEffect(() => {
-    Resources.onLoadingFinished(startGame)
-  }, [startGame])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="game-layout">

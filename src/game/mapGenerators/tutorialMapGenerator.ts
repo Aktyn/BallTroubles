@@ -1,3 +1,4 @@
+import { HealEffect } from 'game/engine/objects/effects/healEffect'
 import { randomFloat, Vector3 } from '../../utils'
 import { StarsEmitter } from '../engine/emitters/starsEmitter'
 import { SunLight } from '../engine/lights/sunLight'
@@ -8,6 +9,7 @@ import {
 } from '../engine/objects/common'
 import { DynamicObject } from '../engine/objects/dynamicObject'
 import { Portal } from '../engine/objects/portal'
+import { RockEnemy } from '../engine/objects/rockEnemy'
 import { MapGenerator } from './common'
 
 export const generateTutorialMap: MapGenerator = (engine, renderer) => {
@@ -75,30 +77,25 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
     }
   }
 
-  // Floor
-  // const floorObj = new GhostObject({
-  //   shape: OBJECT_TYPE.GROUND_BOX,
-  //   material: OBJECT_MATERIAL.WOODEN_CRATE,
-  // })
-  // const boxScale = DefaultProperties[OBJECT_TYPE.BOX].scale
-  // floorObj.pos.set(0, 0, -boxScale.z)
-  // this.map.addObject(floorObj)
-
   // Some dummy objects for tests
-  for (let i = 0; i < 0; i++) {
-    const obj = new DynamicObject(
+  for (let i = 0; i < 10; i++) {
+    // Randomly placed enemies
+    const obj = new RockEnemy(
       new Vector3(randomFloat(-0.9, 0.9), randomFloat(-0.9, 0.9), 0),
       engine.world,
-      {
-        type: OBJECT_TYPE.SMALL_BALL,
-        material: OBJECT_MATERIAL.ENEMY_BALL,
-        friction: 1,
-      },
     )
     obj.setAngle(randomFloat(-Math.PI * 2, Math.PI * 2))
     obj.setLinearVelocity(randomFloat(0, 0.5))
 
     engine.map.addObject(obj)
+
+    //Randomly placed effects
+    engine.map.addObject(
+      new HealEffect(
+        new Vector3(randomFloat(-0.9, 0.9), randomFloat(-0.9, 0.9), 0),
+        engine.world,
+      ),
+    )
   }
 
   engine.map.addObject(new Portal(new Vector3(0.5, 0.5, 0), engine.world, 0))

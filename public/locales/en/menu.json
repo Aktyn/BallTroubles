@@ -10,21 +10,40 @@
   },
   "highscores": {
     "title": "Highscores",
-    "shortInfo": "You can see your best scores here"
+    "shortInfo": "You can see your best scores here",
+    "noSavedResults": "No saved results"
   },
   "gameMode": {
     "campaign": {
       "title": "Campaign",
-      "shortInfo": "Play through a series of levels!\nAchieve highest scores possible!"
+      "shortInfo": "Play through a series of levels!\nAchieve highest scores possible!",
+      "description": "Complete each level to unlock next one until you finish the campaign!"
     },
     "survival": {
       "title": "Survival",
-      "shortInfo": "Survive as long as you can!\nIt gets harder over time."
+      "shortInfo": "Survive as long as you can!\nIt gets harder over time.",
+      "description": "Survive as long as you can!\nIt gets harder over time.\nYou can play only on maps you've unlocked in campaign mode."
     },
     "tutorial": {
       "title": "Tutorial",
-      "shortInfo": "Learn how to play the game!"
+      "shortInfo": "Learn how to play the game!",
+      "userHasCompletedTutorial": "You have completed the tutorial.\nNow you can start playing the game like a pro!",
+      "userHasNotCompletedTutorial": "You have not completed the tutorial yet.\nComplete it to learn the basics of the game.",
+      "start": "Start tutorial",
+      "startAgain": "Start tutorial again"
     }
   },
-  "bestResult": "Best result"
+  "bestScore": "Best score",
+  "bestTime": "Best time",
+  "score": "Score",
+  "time": "Time",
+  "selectedMap": "Selected map",
+  "resetProgress": "Reset progress",
+  "resetProgressDialog": {
+    "title": "Reset progress",
+    "text": "Are you sure you want to reset your game progress?\nAll best scores and times will be lost."
+  },
+  "toastr": {
+    "progressResetInfo": "Progress has been reset"
+  }
 }

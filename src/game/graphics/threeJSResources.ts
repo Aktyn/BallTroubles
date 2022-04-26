@@ -7,8 +7,10 @@ import {
   OBJECT_TYPE,
 } from '../engine/objects/common'
 import { Resources } from '../resources'
+import { OBJLoader } from './loaders/OBJLoader'
 
 const textureLoader = new THREE.TextureLoader()
+const objLoader = new OBJLoader()
 
 function setupColorTexture(texture: THREE.Texture) {
   texture.encoding = THREE.sRGBEncoding
@@ -61,9 +63,19 @@ const ThreeJSTextures = {
     ),
   },
   enemy: {
-    color: setupColorTexture(
-      textureLoader.load(require('../../assets/textures/enemy/enemy.png')),
-    ),
+    rock: {
+      color: setupColorTexture(
+        textureLoader.load(
+          require('../../assets/textures/enemy/rock/color.png'),
+        ),
+      ),
+      normal: textureLoader.load(
+        require('../../assets/textures/enemy/rock/normal.png'),
+      ),
+      roughness: textureLoader.load(
+        require('../../assets/textures/enemy/rock/roughness.png'),
+      ),
+    },
   },
   player: {
     color: setupColorTexture(
@@ -72,20 +84,28 @@ const ThreeJSTextures = {
   },
 }
 
-const BoxGeometry = new THREE.BoxBufferGeometry(1, 1, 1) //BoxBufferGeometry
-const SphereGeometry = new THREE.IcosahedronBufferGeometry(1, 4) //new THREE.SphereBufferGeometry(1, 16, 16)
-
 const linearWhite = new THREE.Color(palette.white).convertSRGBToLinear()
 
-const geometryLoader = (objectType: OBJECT_TYPE) => {
-  switch (objectType) {
-    default:
-    case OBJECT_TYPE.BOX:
-      // case OBJECT_TYPE.GROUND_BOX:
-      return BoxGeometry
-
-    case OBJECT_TYPE.SMALL_BALL:
-      return SphereGeometry
+const fallbackGeometry = new THREE.BoxBufferGeometry(1, 1, 1)
+const geometryLoader = async (objectType: OBJECT_TYPE) => {
+  try {
+    switch (objectType) {
+      default:
+      case OBJECT_TYPE.BOX:
+        return new THREE.BoxBufferGeometry(1, 1, 1)
+      case OBJECT_TYPE.SMALL_BALL:
+        return new THREE.IcosahedronBufferGeometry(1, 4) //new THREE.SphereBufferGeometry(1, 16, 16)
+      case OBJECT_TYPE.HEAL_PLUS: {
+        const plusObj = await objLoader.loadAsync(
+          require('../../assets/meshes/plus.obj'),
+        )
+        const geometry = plusObj.children[0].geometry as THREE.BufferGeometry
+        return geometry
+      }
+    }
+  } catch (e) {
+    console.error(e)
+    return fallbackGeometry
   }
 }
 
@@ -102,7 +122,7 @@ const getDefaultParticleMaterialProperties =
     vertexColors: true,
   })
 
-const materialLoader = (materialType: OBJECT_MATERIAL) => {
+const materialLoader = async (materialType: OBJECT_MATERIAL) => {
   switch (materialType) {
     default:
     case OBJECT_MATERIAL.WOODEN_CRATE:
@@ -118,30 +138,41 @@ const materialLoader = (materialType: OBJECT_MATERIAL) => {
         combine: THREE.AddOperation,
       })
 
-    case OBJECT_MATERIAL.ENEMY_BALL:
-      return new THREE.MeshPhongMaterial({
+    case OBJECT_MATERIAL.ROCK_ENEMY:
+      return new THREE.MeshStandardMaterial({
         flatShading: false,
-        color: new THREE.Color(palette.red['300']).convertSRGBToLinear(),
-        map: ThreeJSTextures.enemy.color,
-        envMap: ThreeJSTextures.environment.nebula1,
-        reflectivity: 0.5,
-        combine: THREE.AddOperation,
+        color: linearWhite,
+        map: ThreeJSTextures.enemy.rock.color,
+        normalMap: ThreeJSTextures.enemy.rock.normal,
+        metalness: 0,
+        roughnessMap: ThreeJSTextures.enemy.rock.roughness,
       })
     case OBJECT_MATERIAL.PLAYER:
-      return new THREE.MeshPhongMaterial({
+      return new THREE.MeshStandardMaterial({
         flatShading: false,
         color: new THREE.Color(
-          palette['deep-orange']['400'],
+          palette['deep-orange']['500'],
         ).convertSRGBToLinear(),
         map: ThreeJSTextures.player.color,
         // envMap: ThreeJSTextures.environment.nebula1,
         // reflectivity: 0,
         // combine: THREE.AddOperation,
         emissive: new THREE.Color(
-          palette['deep-orange']['700'],
+          palette['deep-orange']['600'],
         ).convertSRGBToLinear(),
+        emissiveIntensity: 2.5,
+      })
+    case OBJECT_MATERIAL.HEAL_PLUS:
+      return new THREE.MeshStandardMaterial({
+        flatShading: true,
+        color: new THREE.Color(
+          palette['light-green']['300'],
+        ).convertSRGBToLinear(),
+        emissive: new THREE.Color(palette.green['600']).convertSRGBToLinear(),
+        emissiveIntensity: 3,
       })
 
+    /** PARTICLE MATERIAL **/
     case OBJECT_MATERIAL.SIMPLE_PARTICLE:
       return new THREE.ShaderMaterial({
         ...getDefaultParticleMaterialProperties(),
@@ -186,13 +217,18 @@ const backgroundTextureGetter = (texture: BACKGROUND_TEXTURE) => {
 }
 
 const resourceGetter = <KeyType, ValueType>(
-  loader: (key: KeyType) => ValueType,
+  loader: (key: KeyType) => Promise<ValueType>,
 ) => {
   const store = new Map<KeyType, ValueType>()
 
-  return (key: KeyType) => {
+  return async (key: KeyType) => {
     if (!store.has(key)) {
-      store.set(key, loader(key))
+      try {
+        store.set(key, await loader(key))
+      } catch (e) {
+        console.error(e)
+        store.set(key, null as never)
+      }
     }
     return store.get(key) as ValueType
   }
@@ -200,8 +236,8 @@ const resourceGetter = <KeyType, ValueType>(
 
 export const ThreeJSResources: {
   getBackgroundTexture: typeof backgroundTextureGetter
-  getGeometry: (shape: OBJECT_TYPE) => THREE.BufferGeometry
-  getMaterial: (material: OBJECT_MATERIAL) => THREE.Material
+  getGeometry: (shape: OBJECT_TYPE) => Promise<THREE.BufferGeometry>
+  getMaterial: (material: OBJECT_MATERIAL) => Promise<THREE.Material>
 } = {
   getBackgroundTexture: backgroundTextureGetter,
   getGeometry: resourceGetter(geometryLoader),

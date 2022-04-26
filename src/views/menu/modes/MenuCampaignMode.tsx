@@ -1,28 +1,16 @@
-import { useState } from 'react'
-import { mdiChevronLeft, mdiLock, mdiPlay } from '@mdi/js'
+import { useContext, useEffect, useState } from 'react'
+import { mdiPlay } from '@mdi/js'
 import Icon from '@mdi/react'
-import clsx from 'clsx'
 import { useTranslation } from 'react-i18next'
-import { GAME_MODE, GAME_MAP } from '../../../utils'
-import { CommonMenuModeProperties, gameMapsInfo, MENU_MODE } from './common'
+import { AppContext } from '../../../context/appContext'
+import { GAME_MODE, GAME_MAP, gameMapsInfo } from '../../../utils'
+import { MapTile } from './MapTile'
+import { MenuModeCommonHeader } from './MenuModeCommonHeader'
+import { CommonMenuModeProperties } from './common'
 
-import './MenuCampaignMode.scss'
+import './MenuCampaignSurvivalMode.scss'
 
-// TODO: move this to AppContext and synchronize with local storage
-const savedMapResults = {
-  [GAME_MAP.MAP1]: {
-    locked: false,
-    bestResult: 1337,
-  },
-  [GAME_MAP.MAP2]: {
-    locked: false,
-    bestResult: null,
-  },
-  [GAME_MAP.MAP3]: {
-    locked: true,
-    bestResult: null,
-  },
-}
+type REGULAR_GAME_MAP = Exclude<GAME_MAP, 'tutorial'>
 
 export const MenuCampaignMode = ({
   onModeChange,
@@ -30,51 +18,80 @@ export const MenuCampaignMode = ({
 }: CommonMenuModeProperties) => {
   const [t] = useTranslation()
 
-  const defaultSelected = Object.entries(savedMapResults)
-    .reverse()
-    .find(([, { locked }]) => !locked)?.[0] as GAME_MAP
+  const app = useContext(AppContext)
 
-  const [selectedMap, setSelectedMap] = useState<GAME_MAP>(
-    defaultSelected ?? GAME_MAP.MAP1,
+  interface UserCampaignResult {
+    gameMap: REGULAR_GAME_MAP
+    bestScore: number | null
+    completed: boolean
+  }
+
+  const [selectedMap, setSelectedMap] = useState<REGULAR_GAME_MAP>(
+    GAME_MAP.MAP1,
   )
+  const [nextMapToComplete, setNextMapToComplete] = useState<REGULAR_GAME_MAP>(
+    GAME_MAP.MAP1,
+  )
+  const [userCampaignResult, setUserCampaignResult] = useState<
+    UserCampaignResult[]
+  >([])
 
-  //TODO: some info above maps list about unlocking maps one by one and info when all maps are unlocked and entire campaign completed
+  useEffect(() => {
+    const campaignResults = Object.values(GAME_MAP).reduce((acc, gameMap) => {
+      if (gameMap === GAME_MAP.TUTORIAL) {
+        return acc
+      }
+
+      const userResult = app.gameProgress[GAME_MODE.CAMPAIGN]?.[
+        gameMap
+      ]?.results.find((res) => res.username === app.username)
+
+      acc.push({
+        gameMap,
+        bestScore: userResult?.bestScore ?? null,
+        completed: userResult?.completed ?? false,
+      })
+      return acc
+    }, [] as UserCampaignResult[])
+
+    setUserCampaignResult(campaignResults)
+    let prev: GAME_MAP | null = null
+    for (const result of campaignResults) {
+      if (!result.completed) {
+        if (prev) {
+          setSelectedMap(result.gameMap)
+          setNextMapToComplete(result.gameMap)
+        }
+        break
+      }
+      prev = result.gameMap
+    }
+  }, [app.gameProgress, app.username])
 
   return (
-    <div className="menu-campaign-mode">
-      <header>
-        <span />
-        <span>{t('menu:gameMode.campaign.title')}</span>
-        <button onClick={() => onModeChange(MENU_MODE.HOME)}>
-          <Icon path={mdiChevronLeft} size="16px" style={{ marginRight: 4 }} />
-          {t('common:return')}
-        </button>
-      </header>
+    <div className="menu-campaign-survival-mode">
+      <MenuModeCommonHeader
+        title={t('menu:gameMode.campaign.title')}
+        onModeChange={onModeChange}
+      />
+      <div>{t('menu:gameMode.campaign.description')}</div>
       <div className="maps-list">
-        {Object.entries(gameMapsInfo).map(([mapId, mapInfo]) =>
-          savedMapResults[mapId as unknown as GAME_MAP]?.locked ? (
-            <div key={mapId} className="locked">
-              <Icon path={mdiLock} size="96px" />
-            </div>
-          ) : (
-            <div
-              key={mapId}
-              className={clsx(selectedMap === mapId && 'selected')}
-              onClick={() => setSelectedMap(mapId as GAME_MAP)}
-            >
-              <img src={mapInfo.preview} />
-              <header>{t(mapInfo.name)}</header>
-              {!!savedMapResults[mapId as GAME_MAP]?.bestResult && (
-                <div className="best-score">
-                  <span>{t('menu:bestResult')}:</span>
-                  <strong>
-                    {savedMapResults[mapId as GAME_MAP]?.bestResult}
-                  </strong>
-                </div>
-              )}
-            </div>
-          ),
-        )}
+        {userCampaignResult.map((userResult) => (
+          <MapTile
+            key={userResult.gameMap}
+            gameMap={userResult.gameMap}
+            locked={
+              !userResult.completed && userResult.gameMap !== nextMapToComplete
+            }
+            selected={selectedMap === userResult.gameMap}
+            onSelect={() => setSelectedMap(userResult.gameMap)}
+            bestScore={userResult.bestScore ?? undefined}
+          />
+        ))}
+      </div>
+      <div>
+        <span>{t('menu:selectedMap')}</span>:&nbsp;
+        <strong>{t(gameMapsInfo[selectedMap].name)}</strong>
       </div>
       <button
         style={{ fontSize: 22 }}

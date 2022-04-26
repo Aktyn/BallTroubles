@@ -1,0 +1,71 @@
+@import "../style/palette.scss";
+
+.dialog-overlay {
+  z-index: 99;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba($md-black, 0.5);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  animation: fade-in 0.2s ease-in-out forwards;
+
+  text-shadow: 0 0 2px #fff8;
+  backdrop-filter: blur(4px);
+
+  & > .dialog {
+    background: radial-gradient(at top left, rgba($md-white, 0.5), rgba($md-cyan-200, 0.5));
+    color: mix($md-black, $md-cyan-900, 70%);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    row-gap: 8px;
+    padding: 8px;
+    border: 2px solid rgba($md-cyan-100, 0.25);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px #0008;
+
+    @keyframes slide-in {
+      from {
+        transform: translateY(64px);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    animation: slide-in 0.2s ease-in-out forwards;
+
+    & > header {
+      font-weight: bold;
+    }
+
+    & > .dialog-content {
+      padding: 0 16px;
+    }
+
+    & > .options {
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+  }
+}

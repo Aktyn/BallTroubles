@@ -1,6 +1,11 @@
 {
   "apply": "Apply",
   "clear": "Clear",
+  "change": "Change",
   "start": "Start",
-  "return": "Return"
+  "return": "Return",
+  "close": "Close",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "version": "Version"
 }

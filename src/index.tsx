@@ -1,9 +1,9 @@
 import 'normalize.css'
+import './style/index.scss'
+
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import i18n from './i18n'
-
-import './style/index.scss'
 
 console.log('Environment:', process.env.NODE_ENV)
 

@@ -19,6 +19,7 @@ export abstract class ObjectBase extends Renderable<null> implements Updatable {
   public readonly children: Updatable[] = []
 
   private _destroyed = false
+  public shouldBeDeleted = false
   protected readonly _pos = new Vector3()
   protected readonly _scale = new Vector3()
   protected _angle = 0

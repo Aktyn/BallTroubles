@@ -15,4 +15,8 @@ export const Box2DShapes: { [key in OBJECT_TYPE]: Box2D.Shape } = {
     DefaultProperties[OBJECT_TYPE.PORTAL].scale?.getAverage() *
       PhysicsParameters.SCALAR,
   ),
+  [OBJECT_TYPE.HEAL_PLUS]: new Box2D.PolygonShape().SetAsBox(
+    DefaultProperties[OBJECT_TYPE.HEAL_PLUS].scale.x * PhysicsParameters.SCALAR,
+    DefaultProperties[OBJECT_TYPE.HEAL_PLUS].scale.y * PhysicsParameters.SCALAR,
+  ),
 }

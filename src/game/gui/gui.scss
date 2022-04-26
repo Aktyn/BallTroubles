@@ -10,14 +10,167 @@
 
   & > .left-panel {
     padding: 8px;
-    background-color: #0004;
     height: 100%;
     width: 256px;
     max-width: 100%;
-    border-right: 1px solid $md-light-blue-400;
+    overflow: auto;
 
-    display: flex;
-    flex-direction: column;
+    background: radial-gradient(at top left, rgba($md-light-blue-600, 0.3), rgba($md-pink-600, 0.4));
+    backdrop-filter: blur(4px); //TODO: consider performance influence
+    box-shadow: 0 0 8px #0008;
+    border-right: 1px solid rgba(mix($md-pink-500, $md-light-blue-500, 60%), 0.6);
+
+    display: grid;
+    grid-template-rows: repeat(3, auto);
+    grid-template-columns: 100%;
+    align-items: center;
+    justify-content: space-between;
     row-gap: 4px;
+
+    text-shadow: 0 0 2px #0004;
+
+    & > .loading-info {
+      color: $md-light-blue-100;
+      font-weight: bold;
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    & > * {
+      // GUI sections
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      justify-content: flex-start;
+      row-gap: 8px;
+      text-align: left;
+
+      .footer-info {
+        color: mix($md-light-blue-100, $md-grey-400, 50%);
+        font-size: 10px;
+        text-align: center;
+      }
+
+      .bottom-options {
+        padding: 16px 0;
+        margin: auto;
+        display: inline-flex;
+        flex-direction: column;
+        row-gap: 8px;
+        align-items: stretch;
+        justify-content: center;
+
+        & > button {
+          justify-content: center;
+        }
+      }
+    }
+
+    & > :nth-child(3) {
+      align-self: flex-end;
+    }
+
+    .stats-info {
+      align-self: flex-start;
+      margin: 0 auto;
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      justify-content: center;
+      gap: 8px;
+
+      & > :nth-child(odd) {
+        text-align: right;
+      }
+      & > :nth-child(even) {
+        font-weight: bold;
+        text-align: left;
+      }
+    }
+
+    .player-property-info {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      row-gap: 8px;
+
+      & > label {
+        font-weight: bold;
+        color: $md-light-blue-100;
+      }
+    }
+  }
+
+  & > .gui-overlay {
+    pointer-events: none;
+
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+  }
+
+  & > .paused-overlay {
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(0.95);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    animation: fade-in 0.3s ease-in-out forwards, pulse 4s infinite ease-in-out alternate;
+
+    & > svg {
+      width: auto;
+      height: 61.8%;
+      opacity: 0.75;
+      color: $md-white;
+      stroke: rgba($md-white, 0.5);
+      stroke-width: 0.4px;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+  }
+
+  & > .damage-overlay {
+    &::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(rgba($md-red-400, 0.5), $md-red-400);
+
+      @keyframes fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      animation: fade-out 1s 0s ease-in-out forwards;
+      animation-duration: inherit;
+    }
   }
 }

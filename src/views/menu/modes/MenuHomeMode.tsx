@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import {
-  mdiChartBar,
   mdiClockOutline,
   mdiPlayOutline,
+  mdiPodium,
   mdiSchoolOutline,
 } from '@mdi/js'
 import Icon from '@mdi/react'
@@ -13,9 +13,9 @@ import './MenuHomeMode.scss'
 
 //TODO: create background image for each card
 const campaignCardBackground = require('../../../assets/textures/menu/campaign.webp')
-const survivalCardBackground = require('../../../assets/textures/menu/campaign.webp')
-const tutorialCardBackground = require('../../../assets/textures/menu/campaign.webp')
-const highscoresCardBackground = require('../../../assets/textures/menu/campaign.webp')
+const highscoresCardBackground = require('../../../assets/textures/menu/highscores.webp')
+const survivalCardBackground = require('../../../assets/textures/menu/survival.webp')
+const tutorialCardBackground = require('../../../assets/textures/menu/tutorial.webp')
 
 interface CardProps {
   onClick: () => void
@@ -44,6 +44,11 @@ const Card = ({
   )
 }
 
+const hoverImageStyle: React.CSSProperties = {
+  stroke: '#0008',
+  strokeWidth: 0.1,
+}
+
 export const MenuHomeMode = ({ onModeChange }: CommonMenuModeProperties) => {
   const [t] = useTranslation()
 
@@ -57,7 +62,11 @@ export const MenuHomeMode = ({ onModeChange }: CommonMenuModeProperties) => {
             backgroundImageSrc={campaignCardBackground}
             hoverContent={
               <div>
-                <Icon path={mdiPlayOutline} size="128px" />
+                <Icon
+                  path={mdiPlayOutline}
+                  size="128px"
+                  style={{ ...hoverImageStyle }}
+                />
                 <div style={{ fontSize: 22 }}>
                   {t('menu:gameMode.campaign.shortInfo')}
                 </div>
@@ -70,7 +79,11 @@ export const MenuHomeMode = ({ onModeChange }: CommonMenuModeProperties) => {
             backgroundImageSrc={survivalCardBackground}
             hoverContent={
               <div>
-                <Icon path={mdiClockOutline} size="128px" />
+                <Icon
+                  path={mdiClockOutline}
+                  size="128px"
+                  style={{ ...hoverImageStyle }}
+                />
                 <div style={{ fontSize: 22 }}>
                   {t('menu:gameMode.survival.shortInfo')}
                 </div>
@@ -90,7 +103,11 @@ export const MenuHomeMode = ({ onModeChange }: CommonMenuModeProperties) => {
             backgroundImageSrc={tutorialCardBackground}
             hoverContent={
               <div>
-                <Icon path={mdiSchoolOutline} size="128px" />
+                <Icon
+                  path={mdiSchoolOutline}
+                  size="128px"
+                  style={{ ...hoverImageStyle }}
+                />
                 <div style={{ fontSize: 22 }}>
                   {t('menu:gameMode.tutorial.shortInfo')}
                 </div>
@@ -103,7 +120,11 @@ export const MenuHomeMode = ({ onModeChange }: CommonMenuModeProperties) => {
             backgroundImageSrc={highscoresCardBackground}
             hoverContent={
               <div>
-                <Icon path={mdiChartBar} size="128px" />
+                <Icon
+                  path={mdiPodium}
+                  size="128px"
+                  style={{ ...hoverImageStyle }}
+                />
                 <div style={{ fontSize: 22 }}>
                   {t('menu:highscores.shortInfo')}
                 </div>

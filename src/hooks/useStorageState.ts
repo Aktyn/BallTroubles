@@ -1,11 +1,11 @@
-import { Dispatch, useState } from 'react'
+import { useState } from 'react'
 import { tryParseJSON } from '../utils'
 
 export const useStorageState = <ValueType>(
   storageKey: string,
   defaultValue: ValueType,
-): [ValueType, Dispatch<React.SetStateAction<ValueType>>] => {
-  const rawStorageValue = localStorage.getItem('username')
+): [ValueType, (value: ValueType) => void] => {
+  const rawStorageValue = localStorage.getItem(storageKey)
   const initialValue = rawStorageValue
     ? tryParseJSON(rawStorageValue)
     : defaultValue
@@ -17,5 +17,5 @@ export const useStorageState = <ValueType>(
     setValue(newValue)
   }
 
-  return [value, setStorageValue as Dispatch<React.SetStateAction<ValueType>>]
+  return [value, setStorageValue]
 }

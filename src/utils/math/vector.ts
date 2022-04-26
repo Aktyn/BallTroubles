@@ -50,6 +50,14 @@ abstract class Vector<Length extends number> {
     return this
   }
 
+  dot(vector: Readonly<Vector<Length>>) {
+    let sum = 0
+    for (let i = 0; i < this.buffer.length; i++) {
+      sum += this.buffer[i] * vector.buffer[i]
+    }
+    return sum
+  }
+
   scale(value: number) {
     for (let i = 0; i < this.buffer.length; i++) {
       this.buffer[i] *= value

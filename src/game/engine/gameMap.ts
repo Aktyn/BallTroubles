@@ -8,9 +8,6 @@ import { Updatable, updateUpdatables } from './objects/common'
 import { ObjectBase } from './objects/objectBase'
 
 export class GameMap {
-  private readonly _objects: ObjectBase[] = []
-  // private readonly emitters: EmitterBase[] = []
-  // private readonly lights: LightSource[] = []
   private readonly _updatables: Updatable[] = []
   private readonly _notSynchronizedRenderables: Renderable<never>[] = []
   public readonly camera: GameCamera
@@ -25,20 +22,17 @@ export class GameMap {
     this.camera.destroy()
     for (const updatable of this._updatables) {
       updatable.destroy()
-      this._updatables.length = 0
     }
     this._notSynchronizedRenderables.length = 0
-    this._objects.length = 0
-    // this.emitters.length = 0
-    // this.lights.length = 0
+    this._updatables.length = 0
   }
 
   get notSynchronizedRenderables(): readonly Renderable<never>[] {
     return this._notSynchronizedRenderables
   }
 
-  get objects(): readonly ObjectBase[] {
-    return this._objects
+  get updatables(): readonly Updatable[] {
+    return this._updatables
   }
 
   onRenderablesSynchronized() {
@@ -46,7 +40,6 @@ export class GameMap {
   }
 
   addObject(obj: ObjectBase) {
-    this._objects.push(obj)
     this._updatables.push(obj)
     if (!obj.isSynchronizedWithRenderer()) {
       this._notSynchronizedRenderables.push(obj)
@@ -54,7 +47,6 @@ export class GameMap {
   }
 
   addEmitter(emitter: EmitterBase) {
-    //? this.emitters.push(emitter)
     this._updatables.push(emitter)
     if (!emitter.isSynchronizedWithRenderer()) {
       this._notSynchronizedRenderables.push(emitter)
@@ -62,7 +54,6 @@ export class GameMap {
   }
 
   addLight(light: LightSource) {
-    //? this.lights.push(light)
     this._updatables.push(light)
     if (!light.isSynchronizedWithRenderer()) {
       this._notSynchronizedRenderables.push(light)

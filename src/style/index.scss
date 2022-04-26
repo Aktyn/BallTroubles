@@ -1,7 +1,12 @@
 @import "./palette.scss";
+@import "./scrollbars.scss";
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  overflow: hidden;
 }
 
 body {
@@ -10,6 +15,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  overflow: hidden;
   background-color: $md-black;
   color: $md-white;
 }
@@ -54,6 +60,10 @@ button {
 .flex {
   display: flex;
   align-items: center;
+
+  &.justify-center {
+    justify-content: center;
+  }
 
   &.nowrap {
     flex-wrap: nowrap;

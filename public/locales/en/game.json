@@ -1,0 +1,39 @@
+{
+  "loadingResourcesInfo": "Loading resources...",
+  "exitGame": "Exit Game",
+  "fps": "FPS",
+  "zoom": "Zoom",
+  "resetZoom": "Reset Zoom",
+  "elapsedTime": "Elapsed time",
+  "score": "Score",
+  "mode": "Game mode",
+  "map": "Map",
+  "exitGameDialog": {
+    "title": "Exiting game",
+    "text": "Are you sure you want to exit the game?\nYour current progress will be lost."
+  },
+  "settingsDialog": {
+    "title": "Settings"
+  },
+  "resultDialog": {
+    "tutorialTitle": "Tutorial completed",
+    "tutorialText": "Congratulations {{username}}!\nYou have completed the tutorial.\nYou can now start playing the game.",
+    "exitTutorial": "Exit tutorial",
+    "campaignFailureText": "You died before fulfilling the game goal.\nYou can try again.",
+    "deathTitle": "You died",
+    "mapCompletedTitle": "Map completed",
+    "backToMenu": "Back to menu",
+    "tryAgain": "Try again"
+  },
+  "toastr": {
+    "exitGameInfo": "You have exited the game"
+  },
+  "player": {
+    "health": "Player health",
+    "speed": "Player speed",
+    "activeEffects": "Active effects"
+  },
+  "settings": "Game settings",
+  "pause": "Pause",
+  "resume": "Resume"
+}

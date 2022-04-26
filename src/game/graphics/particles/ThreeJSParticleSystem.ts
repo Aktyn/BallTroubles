@@ -3,7 +3,6 @@ import {
   EmitterBase,
   RendererUpdateData,
 } from '../../engine/emitters/emitterBase'
-import { ThreeJSResources } from '../threeJSResources'
 
 export class ThreeJSParticleSystem {
   private readonly emitter: EmitterBase
@@ -18,6 +17,7 @@ export class ThreeJSParticleSystem {
 
   constructor(
     emitter: EmitterBase,
+    threeMaterial: THREE.Material,
     canvasHeight: number,
     frustumCulled: boolean,
   ) {
@@ -25,10 +25,7 @@ export class ThreeJSParticleSystem {
 
     const geometry = new THREE.BufferGeometry()
 
-    this.particleSystem = new THREE.Points(
-      geometry,
-      ThreeJSResources.getMaterial(emitter.properties.material),
-    )
+    this.particleSystem = new THREE.Points(geometry, threeMaterial)
     this.particleSystem.frustumCulled = frustumCulled
 
     this.positionBuffer = new THREE.Float32BufferAttribute(

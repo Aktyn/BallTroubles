@@ -1,6 +1,7 @@
 import Box2D from '@cocos/box2d'
-import { Vector3 } from '../../../utils'
+import { randomFloat, Vector3 } from '../../../utils'
 import { PortalEmitter } from '../emitters/portalEmitter'
+import { Vector2 } from './../../../utils/math/vector'
 import { OBJECT_TYPE } from './common'
 import { DynamicObject } from './dynamicObject'
 
@@ -24,7 +25,7 @@ export class Portal extends DynamicObject {
   public readonly groupNumber: number
 
   private targetObject: DynamicObject | null = null
-  private teleportedObject: DynamicObject | null = null
+  private teleportedObject: DynamicObject[] = []
   private exitPortal: Portal | null = null
 
   constructor(pos: Vector3, world: Box2D.World, groupNumber: number) {
@@ -44,20 +45,23 @@ export class Portal extends DynamicObject {
   }
 
   teleport(object: DynamicObject, exitPortal: Portal) {
-    if (this.teleportedObject) {
-      return // Object must first leave the teleport it has teleported to
+    // Object must first leave the teleport it has teleported to
+    if (this.teleportedObject.includes(object)) {
+      return
     }
+
     this.targetObject = object
     this.exitPortal = exitPortal
   }
 
   private waitForObjectToLeave(object: DynamicObject) {
-    this.teleportedObject = object
+    this.teleportedObject.push(object)
   }
 
   objectLeftTeleport(object: DynamicObject) {
-    if (this.teleportedObject === object) {
-      this.teleportedObject = null
+    const objIndex = this.teleportedObject.indexOf(object)
+    if (objIndex !== -1) {
+      this.teleportedObject.splice(objIndex, 1)
     }
   }
 
@@ -67,16 +71,32 @@ export class Portal extends DynamicObject {
 
       const diffLength = posDiff.getLengthSquared()
 
+      const targetVector = new Vector2(
+        Math.cos(this.targetObject.angle),
+        Math.sin(this.targetObject.angle),
+      )
+      const vectorsDot = targetVector.dot(posDiff.copy().normalize())
+
       const stepVector = posDiff
         .normalize()
-        .scale(Portal.PULLING_SPEED * deltaTime)
+        .scale(
+          Portal.PULLING_SPEED * deltaTime * Math.max(1, (1 - vectorsDot) * 4),
+        )
 
       const stepLength = stepVector.getLengthSquared()
 
       if (stepLength >= diffLength) {
+        const randomOffsetLength = 1e-6
+
         this.exitPortal.waitForObjectToLeave(this.targetObject)
         this.targetObject.setPosition(
-          this.targetObject.position.setV(this.exitPortal.position),
+          this.targetObject.position
+            .setV(this.exitPortal.position)
+            //add some randomness to the position to prevent objects from being stuck in each other
+            .add(
+              randomFloat(-randomOffsetLength, randomOffsetLength),
+              randomFloat(-randomOffsetLength, randomOffsetLength),
+            ),
         )
         this.targetObject = this.exitPortal = null
       } else {

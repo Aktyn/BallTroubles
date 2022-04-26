@@ -1,0 +1,15 @@
+header.menu-mode-common-header {
+  display: inline-grid;
+  align-items: center;
+  grid-template-columns: 1fr auto 1fr;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 22px;
+  min-width: 512px;
+  width: 100%;
+  max-width: 100%;
+
+  & > :last-child {
+    margin-left: auto;
+  }
+}

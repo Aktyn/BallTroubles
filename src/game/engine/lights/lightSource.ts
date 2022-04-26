@@ -7,6 +7,7 @@ export abstract class LightSource
   implements Updatable
 {
   private _destroyed = false
+  public shouldBeDeleted = false
   protected readonly _position: Vector3 = new Vector3()
   protected readonly _targetPosition: Vector3 = new Vector3()
   protected readonly _color: Vector3 = new Vector3(1, 1, 1)

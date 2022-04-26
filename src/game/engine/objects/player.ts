@@ -1,48 +1,74 @@
 import Box2D from '@cocos/box2d'
-import { Vector2, Vector3 } from '../../../utils'
+import { clamp, Vector2, Vector3 } from '../../../utils'
+import { GUIController } from '../../gui'
 import { PhysicsParameters } from '../../physics/utils'
 import { Steering } from '../common/steering'
-import { EmitterBase } from '../emitters/emitterBase'
 import { FireballEmitter } from '../emitters/fireballEmitter'
 import { OBJECT_MATERIAL, OBJECT_TYPE } from './common'
 import { DynamicObject } from './dynamicObject'
 
 interface PlayerProperties {
-  speed?: number
+  maxSpeed?: number
+  minSpeed?: number
   rotationSpeed?: number
 }
 
 export class Player extends DynamicObject {
   private static SPEED_SMOOTHNESS = 2
   private static ANGLE_SMOOTHNESS = 4
+  private static ACCELERATION = 0.5
 
   private readonly steering: Steering
+  private readonly gui: GUIController
   private readonly playerProperties: Required<PlayerProperties>
-  private readonly emitter: EmitterBase
+  private readonly onDeath: () => void
+
+  private speed = 0
+  private hp = 1
 
   constructor(
     steering: Steering,
     world: Box2D.World,
+    gui: GUIController,
+    onDeath: () => void,
     properties: PlayerProperties = {},
   ) {
     super(new Vector3(), world, {
       type: OBJECT_TYPE.SMALL_BALL,
       material: OBJECT_MATERIAL.PLAYER,
-      friction: 0,
+      friction: 0.5,
       restitution: 1,
     })
     this.steering = steering
+    this.gui = gui
+    this.onDeath = onDeath
     this.playerProperties = {
-      speed: properties.speed ?? 0.3,
-      rotationSpeed: properties.rotationSpeed ?? Math.PI,
+      maxSpeed: properties.maxSpeed ?? 0.5,
+      minSpeed: properties.minSpeed ?? 0,
+      rotationSpeed: properties.rotationSpeed ?? Math.PI * 1.5,
     }
 
-    this.emitter = new FireballEmitter(this)
-    this.children.push(this.emitter)
+    this.children.push(new FireballEmitter(this))
+
+    this.gui.setPlayerHP(this.hp)
+    this.gui.setPlayerSpeed(this.speed / this.playerProperties.maxSpeed)
   }
 
-  destroy() {
-    super.destroy()
+  inflictDamage(damage: number) {
+    this.hp = clamp(this.hp - damage, 0, 1)
+    this.gui.setPlayerHP(this.hp, damage)
+    if (this.hp <= 0) {
+      this.onDeath()
+    }
+  }
+
+  heal(factor: number) {
+    if (this.hp === 1) {
+      return false
+    }
+    this.hp = clamp(this.hp + factor, 0, 1)
+    this.gui.setPlayerHP(this.hp)
+    return true
   }
 
   update(deltaTime: number) {
@@ -61,7 +87,22 @@ export class Player extends DynamicObject {
       movingAngle -= deltaTime * this.playerProperties.rotationSpeed
     }
 
-    const targetSpeed = PhysicsParameters.SCALAR * this.playerProperties.speed
+    if (this.steering.up) {
+      this.speed = Math.min(
+        this.playerProperties.maxSpeed,
+        this.speed + deltaTime * Player.ACCELERATION,
+      )
+      this.gui.setPlayerSpeed(this.speed / this.playerProperties.maxSpeed)
+    }
+    if (this.steering.down) {
+      this.speed = Math.max(
+        this.playerProperties.minSpeed,
+        this.speed - deltaTime * Player.ACCELERATION,
+      )
+      this.gui.setPlayerSpeed(this.speed / this.playerProperties.maxSpeed)
+    }
+
+    const targetSpeed = PhysicsParameters.SCALAR * this.speed
 
     const speedDiff = targetSpeed - speed
     speed +=

@@ -40,7 +40,7 @@ export const MenuView = ({
                 onClick={() => app.setUsername('')}
               >
                 <Icon path={mdiDelete} size="16px" style={{ marginRight: 4 }} />
-                {t('common:clear')}
+                {t('common:change')}
               </button>
             </div>
           </div>

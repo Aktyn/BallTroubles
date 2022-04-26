@@ -21,6 +21,7 @@ export class GameCamera {
     onZoomReset: this.resetZoom.bind(this),
     onZoomIn: this.zoomIn.bind(this),
     onZoomOut: this.zoomOut.bind(this),
+    onPauseToggle: this.togglePause.bind(this),
   }
 
   private readonly gui: GUIController
@@ -31,6 +32,7 @@ export class GameCamera {
   private visibleTargetPosition = new Vector3(0, 0, 0)
   private _zoom = 1
   private _visibleZoom = 1
+  private paused = false
 
   constructor(gui: GUIController, properties: CameraProperties) {
     this.gui = gui
@@ -49,6 +51,7 @@ export class GameCamera {
     this.gui.events.on('zoom-reset', this.eventListeners.onZoomReset)
     this.gui.events.on('zoom-in', this.eventListeners.onZoomIn)
     this.gui.events.on('zoom-out', this.eventListeners.onZoomOut)
+    this.gui.events.on('toggle-game-pause', this.eventListeners.onPauseToggle)
   }
 
   private removeEventListeners() {
@@ -56,9 +59,17 @@ export class GameCamera {
     this.gui.events.off('zoom-reset', this.eventListeners.onZoomReset)
     this.gui.events.off('zoom-in', this.eventListeners.onZoomIn)
     this.gui.events.off('zoom-out', this.eventListeners.onZoomOut)
+    this.gui.events.off('toggle-game-pause', this.eventListeners.onPauseToggle)
+  }
+
+  private togglePause() {
+    this.paused = !this.paused
   }
 
   private handleMouseWheel(event: WheelEvent) {
+    if (this.paused) {
+      return
+    }
     this.zoom = this._zoom - ((event.deltaY / 52) * 0.5) / (this._zoom + 1)
     this.gui.setZoom(this._zoom)
   }

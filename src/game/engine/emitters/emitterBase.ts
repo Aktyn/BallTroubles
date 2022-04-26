@@ -22,6 +22,7 @@ export abstract class EmitterBase
   implements Updatable
 {
   private _destroyed = false
+  public shouldBeDeleted = false
   readonly properties: Readonly<Required<EmitterProperties>>
   protected readonly sizes: Float32Array
   protected readonly positions: Float32Array

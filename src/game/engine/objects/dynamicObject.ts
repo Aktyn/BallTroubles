@@ -4,7 +4,7 @@ import { Box2DShapes } from '../../physics/box2dResources'
 import { b2BodyType, PhysicsParameters } from '../../physics/utils'
 import { ObjectBase, CommonObjectProperties } from './objectBase'
 
-interface DynamicObjectProperties extends CommonObjectProperties {
+export interface DynamicObjectProperties extends CommonObjectProperties {
   /** @default 1 */
   restitution?: number
   /** @default 1 */
@@ -67,6 +67,10 @@ export class DynamicObject extends ObjectBase {
         Math.sin(this._angle) * value * PhysicsParameters.SCALAR,
       ),
     )
+  }
+
+  getSpeed() {
+    return this.body.m_linearVelocity.Length()
   }
 
   set angularSpeed(value: number) {

@@ -46,7 +46,19 @@
       "error",
       2,
       {
-        "SwitchCase": 1
+        "SwitchCase": 1,
+        "VariableDeclarator": 1,
+        "outerIIFEBody": 1,
+        "CallExpression": {
+          "arguments": "first"
+        },
+        "FunctionDeclaration": {
+          "parameters": "first"
+        },
+        "FunctionExpression": {
+          "parameters": "first"
+        },
+        "ignoredNodes": ["ConditionalExpression"]
       }
     ],
     "linebreak-style": [
@@ -108,8 +120,14 @@
       "error",
       {
         "validateTemplate": false,
-        "ignoreCallee": ["*"],
-        "ignoreAttribute": ["size"]
+        "ignoreCallee": [
+          "*"
+        ],
+        "ignoreAttribute": [
+          "size",
+          "position",
+          "theme"
+        ]
       }
     ]
   }

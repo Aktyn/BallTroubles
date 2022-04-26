@@ -19,17 +19,26 @@ interface Namespaces {
   //@ts-ignore
   error: typeof import('../public/locales/en/error.json')
   //@ts-ignore
+  time: typeof import('../public/locales/en/time.json')
+  //@ts-ignore
   map: typeof import('../public/locales/en/map.json')
   //@ts-ignore
   menu: typeof import('../public/locales/en/menu.json')
+  //@ts-ignore
+  game: typeof import('../public/locales/en/game.json')
+  //@ts-ignore
+  tutorial: typeof import('../public/locales/en/tutorial.json')
 }
 
 const nsMap: { [key in keyof Namespaces]: boolean } = {
   global: true,
   common: true,
   error: true,
+  time: true,
   map: true,
   menu: true,
+  game: true,
+  tutorial: true,
 }
 
 type DotPrefix<T extends string> = T extends '' ? '' : `.${T}`

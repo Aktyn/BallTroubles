@@ -1,0 +1,16 @@
+@import "./palette.scss";
+
+/** https://fkhadra.github.io/react-toastify/how-to-style#override-existing-css-classes **/
+
+.Toastify__toast-theme--dark {
+  background: radial-gradient(at top left, rgba($md-light-blue-400, 0.5), rgba($md-pink-300, 0.4));
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba($md-light-blue-200, 0.5);
+  text-shadow: 0 0 2px #0008;
+}
+
+.Toastify__toast-icon {
+  svg {
+    fill: $md-light-blue-100;
+  }
+}
