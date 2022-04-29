@@ -2,19 +2,17 @@ import { Vector3 } from '../../utils'
 import { GUIController } from '../gui'
 import { GameCamera } from './camera'
 import { Renderable } from './common/renderable'
-import { EmitterBase } from './emitters/emitterBase'
-import { LightSource } from './lights/lightSource'
 import { Updatable, updateUpdatables } from './objects/common'
 import { ObjectBase } from './objects/objectBase'
 
 export class GameMap {
   private readonly _updatables: Updatable[] = []
-  private readonly _notSynchronizedRenderables: Renderable<never>[] = []
+  public readonly notSynchronizedRenderables = new Set<Renderable<never>>()
   public readonly camera: GameCamera
 
   constructor(gui: GUIController) {
     this.camera = new GameCamera(gui, {
-      targetPositionOffset: new Vector3(0, -0.5, 1),
+      targetPositionOffset: new Vector3(0, -0.8, 1.4),
     })
   }
 
@@ -23,42 +21,29 @@ export class GameMap {
     for (const updatable of this._updatables) {
       updatable.destroy()
     }
-    this._notSynchronizedRenderables.length = 0
+    this.notSynchronizedRenderables.clear()
     this._updatables.length = 0
-  }
-
-  get notSynchronizedRenderables(): readonly Renderable<never>[] {
-    return this._notSynchronizedRenderables
   }
 
   get updatables(): readonly Updatable[] {
     return this._updatables
   }
 
-  onRenderablesSynchronized() {
-    this._notSynchronizedRenderables.length = 0
+  add(updatable: Updatable) {
+    this._updatables.push(updatable)
   }
 
-  addObject(obj: ObjectBase) {
-    this._updatables.push(obj)
-    if (!obj.isSynchronizedWithRenderer()) {
-      this._notSynchronizedRenderables.push(obj)
-    }
-  }
+  // addObject(obj: ObjectBase) {
+  //   this._updatables.push(obj)
+  // }
 
-  addEmitter(emitter: EmitterBase) {
-    this._updatables.push(emitter)
-    if (!emitter.isSynchronizedWithRenderer()) {
-      this._notSynchronizedRenderables.push(emitter)
-    }
-  }
+  // addEmitter(emitter: EmitterBase) {
+  //   this._updatables.push(emitter)
+  // }
 
-  addLight(light: LightSource) {
-    this._updatables.push(light)
-    if (!light.isSynchronizedWithRenderer()) {
-      this._notSynchronizedRenderables.push(light)
-    }
-  }
+  // addLight(light: LightSource) {
+  //   this._updatables.push(light)
+  // }
 
   setCameraTarget(target: ObjectBase) {
     this.camera.setTarget(target)
@@ -67,6 +52,9 @@ export class GameMap {
   update(deltaTime: number) {
     this.camera.update(deltaTime)
 
-    updateUpdatables(this._updatables, deltaTime)
+    const nonSynchronized = updateUpdatables(this._updatables, deltaTime)
+    for (const renderable of nonSynchronized) {
+      this.notSynchronizedRenderables.add(renderable)
+    }
   }
 }

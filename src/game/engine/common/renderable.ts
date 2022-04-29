@@ -26,6 +26,10 @@ export abstract class Renderable<
   synchronizeWithRenderer(
     options: Partial<RendererSynchronizerOptions<UpdateData>> = {},
   ) {
+    if (this.synchronizedWithRenderer) {
+      console.warn('Object is already synchronized with renderer')
+      return
+    }
     this.rendererSynchronizerOptions = options
     this.synchronizedWithRenderer = true
   }

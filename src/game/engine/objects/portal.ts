@@ -106,6 +106,6 @@ export class Portal extends DynamicObject {
       }
     }
 
-    super.update(deltaTime)
+    return super.update(deltaTime)
   }
 }

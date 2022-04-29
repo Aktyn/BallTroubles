@@ -4,10 +4,10 @@ import { ObjectBase } from '../objects/objectBase'
 import { EmitterBase } from './emitterBase'
 
 export class FireballEmitter extends EmitterBase {
-  private static PARTICLE_SIZE_MAX = 100 as const
-  private static PARTICLE_SIZE_MIN = 5 as const
+  private static PARTICLE_SIZE_MAX = 120 as const
+  private static PARTICLE_SIZE_MIN = 10 as const
   private static SHRINKING_SPEED = 1 as const
-  private static SPAWN_RADIUS_OFFSET = -0.2 as const
+  private static SPAWN_RADIUS_OFFSET = -0.15 as const
   private static BASE_COLOR = [0.5, 0.15, 0] as const
 
   private readonly parent: ObjectBase

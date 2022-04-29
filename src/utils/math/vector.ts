@@ -105,7 +105,11 @@ abstract class Vector<Length extends number> {
   }
 
   getLength() {
-    return Math.sqrt(this.getLengthSquared())
+    const squaredLength = this.getLengthSquared()
+    if (squaredLength < EPSILON) {
+      return 0
+    }
+    return Math.sqrt(squaredLength)
   }
 
   normalize() {

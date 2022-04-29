@@ -16,6 +16,16 @@ export class TutorialGameMode extends GameCore {
     this.appContext = appContext
   }
 
+  onUpdate() {
+    // noop
+  }
+
+  onGameStarted() {
+    this.engine?.events.on('enemy-damaged', (damage) => {
+      console.log(damage)
+    })
+  }
+
   protected onGameOver(isPlayerDead: boolean) {
     // Add the current player to the list of players who completed the tutorial
     if (

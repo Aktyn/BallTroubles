@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialog } from '../../components/Dialog'
 import { GAME_MAP, GAME_MODE } from '../../utils'
@@ -44,20 +45,49 @@ const TutorialResultBody = ({
   )
 }
 const CampaignSuccessResultBody = ({
-  // username,
-  // score,
+  username,
+  score,
+  map,
   onExitToMenu,
-}: CommonDialogNavigationProps & { score: number }) => {
+  onRepeatGame,
+}: CommonDialogNavigationProps &
+  Pick<GameResultDialogProps, 'onRepeatGame' | 'map'> & { score: number }) => {
   const [t] = useTranslation()
+
+  const nextMapUnlocked = useMemo(() => {
+    const mapsArray = Object.values(GAME_MAP)
+    const nextMapIndex = mapsArray.indexOf(map) + 1
+
+    return mapsArray[nextMapIndex] !== GAME_MAP.TUTORIAL
+  }, [map])
 
   return (
     <div className="campaign-success-result-body">
-      {/* eslint-disable-next-line i18next/no-literal-string*/}
-      <div style={{ whiteSpace: 'pre-line' }}>TODO</div>
       <div>
+        <div>
+          <span>{t('game:resultDialog.congratulations')}</span>&nbsp;
+          <strong>{username}</strong>
+        </div>
+        <div>
+          <span>{t('game:resultDialog.resultScore')}</span>:&nbsp;
+          <strong>{score}</strong>
+        </div>
+        <div>
+          {t(
+            nextMapUnlocked
+              ? 'game:resultDialog.nextMapUnlocked'
+              : 'game:resultDialog.campaignFinished',
+          )}
+        </div>
+      </div>
+      <div className="flex gap-8">
         <button onClick={onExitToMenu}>
-          {t('game:resultDialog.exitTutorial')}
+          {t('game:resultDialog.backToMenu')}
         </button>
+        <button onClick={onRepeatGame}>
+          {t('game:resultDialog.repeatMap')}
+        </button>
+        {nextMapUnlocked && <button>{t('game:resultDialog.nextMap')}</button>}
       </div>
     </div>
   )
@@ -94,6 +124,7 @@ const SurvivalResultBody = () => {
 export const GameResultDialog = ({
   result,
   mode,
+  map,
   onExitToMenu,
   onRepeatGame,
 }: GameResultDialogProps) => {
@@ -127,8 +158,10 @@ export const GameResultDialog = ({
           ) : (
             <CampaignSuccessResultBody
               username={result?.user ?? '-'}
-              onExitToMenu={onExitToMenu}
               score={result?.score ?? 0}
+              onExitToMenu={onExitToMenu}
+              onRepeatGame={onRepeatGame}
+              map={map}
             />
           ))}
         {mode === GAME_MODE.SURVIVAL && <SurvivalResultBody />}

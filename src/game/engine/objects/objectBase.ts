@@ -48,7 +48,7 @@ export abstract class ObjectBase extends Renderable<null> implements Updatable {
   }
 
   update(deltaTime: number) {
-    updateUpdatables(this.children, deltaTime)
+    return updateUpdatables(this.children, deltaTime)
   }
 
   get position(): Readonly<Vector3> {

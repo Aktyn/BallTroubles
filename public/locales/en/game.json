@@ -19,11 +19,18 @@
     "tutorialTitle": "Tutorial completed",
     "tutorialText": "Congratulations {{username}}!\nYou have completed the tutorial.\nYou can now start playing the game.",
     "exitTutorial": "Exit tutorial",
+    "campaignSuccessText": "Map completed!",
     "campaignFailureText": "You died before fulfilling the game goal.\nYou can try again.",
+    "campaignFinished": "You have finished the campaign!",
     "deathTitle": "You died",
     "mapCompletedTitle": "Map completed",
     "backToMenu": "Back to menu",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "repeatMap": "Repeat map",
+    "nextMap": "Go to next map",
+    "nextMapUnlocked": "Next map unlocked!",
+    "resultScore": "You completed the map with score",
+    "congratulations": "Congratulations"
   },
   "toastr": {
     "exitGameInfo": "You have exited the game"
@@ -32,6 +39,10 @@
     "health": "Player health",
     "speed": "Player speed",
     "activeEffects": "Active effects"
+  },
+  "goal": {
+    "label": "Game goals",
+    "enemiesLeftToKill": "Enemies to kill"
   },
   "settings": "Game settings",
   "pause": "Pause",

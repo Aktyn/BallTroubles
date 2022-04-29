@@ -1,8 +1,9 @@
 import Box2D from '@cocos/box2d'
-import { Vector2, Vector3 } from '../../../utils'
+import { clamp, Vector2, Vector3 } from '../../../utils'
 import { PhysicsParameters } from '../../physics/utils'
 import { OBJECT_TYPE } from './common'
 import { DynamicObject, DynamicObjectProperties } from './dynamicObject'
+import { HealthBar } from './sprites/healthBar'
 
 interface EnemyProperties {
   speed?: number
@@ -17,6 +18,7 @@ export abstract class EnemyBase extends DynamicObject {
   abstract readonly strength: number
 
   private hp = 1
+  private healthBar: HealthBar | null = null
 
   constructor(
     pos: Vector3,
@@ -25,7 +27,6 @@ export abstract class EnemyBase extends DynamicObject {
   ) {
     super(pos, world, {
       type: OBJECT_TYPE.SMALL_BALL,
-      // material: OBJECT_MATERIAL.ROCK_ENEMY,
       friction: 0.5,
       restitution: 1,
       ...properties,
@@ -33,6 +34,20 @@ export abstract class EnemyBase extends DynamicObject {
     this.enemyProperties = {
       speed: properties.speed ?? 0.4,
     }
+  }
+
+  inflictDamage(damage: number) {
+    this.hp = clamp(this.hp - damage, 0, 1)
+    if (this.hp < 1 && !this.healthBar) {
+      this.children.push((this.healthBar = new HealthBar(this)))
+    }
+    this.healthBar?.setValue(this.hp)
+
+    if (this.hp <= 0) {
+      this.shouldBeDeleted = true
+      return true
+    }
+    return false
   }
 
   update(deltaTime: number) {
@@ -72,6 +87,6 @@ export abstract class EnemyBase extends DynamicObject {
 
     this.setAngle(smoothAngle)
 
-    super.update(deltaTime)
+    return super.update(deltaTime)
   }
 }

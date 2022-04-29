@@ -102,7 +102,7 @@ export const MenuSurvivalMode = ({
             : undefined
         }
       >
-        <Icon path={mdiPlay} size="16px" style={{ marginRight: 4 }} />
+        <Icon path={mdiPlay} size="24px" style={{ marginRight: 4 }} />
         {t('common:start')}
       </button>
     </div>

@@ -4,8 +4,9 @@ import { GUIController } from '../../gui'
 import { PhysicsParameters } from '../../physics/utils'
 import { Steering } from '../common/steering'
 import { FireballEmitter } from '../emitters/fireballEmitter'
-import { OBJECT_MATERIAL, OBJECT_TYPE } from './common'
+import { COLLISION_MASKS, OBJECT_MATERIAL, OBJECT_TYPE } from './common'
 import { DynamicObject } from './dynamicObject'
+import { EffectBase } from './effects/effectBase'
 
 interface PlayerProperties {
   maxSpeed?: number
@@ -21,6 +22,10 @@ export class Player extends DynamicObject {
   private readonly steering: Steering
   private readonly gui: GUIController
   private readonly playerProperties: Required<PlayerProperties>
+  private readonly effects = new Map<
+    string,
+    { effect: EffectBase; duration: number }
+  >()
   private readonly onDeath: () => void
 
   private speed = 0
@@ -38,6 +43,7 @@ export class Player extends DynamicObject {
       material: OBJECT_MATERIAL.PLAYER,
       friction: 0.5,
       restitution: 1,
+      categoryBits: COLLISION_MASKS.PLAYER,
     })
     this.steering = steering
     this.gui = gui
@@ -52,6 +58,20 @@ export class Player extends DynamicObject {
 
     this.gui.setPlayerHP(this.hp)
     this.gui.setPlayerSpeed(this.speed / this.playerProperties.maxSpeed)
+  }
+
+  registerEffect(effect: EffectBase, duration: number) {
+    this.effects.set(effect.id, { effect, duration })
+    this.gui.setPlayerEffects(Array.from(this.effects.values()))
+  }
+
+  unregisterEffect(effect: EffectBase) {
+    this.effects.delete(effect.id)
+    this.gui.setPlayerEffects(Array.from(this.effects.values()))
+  }
+
+  getActiveEffects(): Readonly<{ effect: EffectBase; duration: number }[]> {
+    return Array.from(this.effects.values())
   }
 
   inflictDamage(damage: number) {
@@ -129,6 +149,6 @@ export class Player extends DynamicObject {
 
     this.setAngle(smoothAngle)
 
-    super.update(deltaTime)
+    return super.update(deltaTime)
   }
 }

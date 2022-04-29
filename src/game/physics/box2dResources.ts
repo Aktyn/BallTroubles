@@ -19,4 +19,15 @@ export const Box2DShapes: { [key in OBJECT_TYPE]: Box2D.Shape } = {
     DefaultProperties[OBJECT_TYPE.HEAL_PLUS].scale.x * PhysicsParameters.SCALAR,
     DefaultProperties[OBJECT_TYPE.HEAL_PLUS].scale.y * PhysicsParameters.SCALAR,
   ),
+  [OBJECT_TYPE.GUN1]: new Box2D.CircleShape(
+    DefaultProperties[OBJECT_TYPE.GUN1].scale?.getAverage() *
+      2 *
+      PhysicsParameters.SCALAR,
+  ),
+  [OBJECT_TYPE.SIMPLE_BULLET]: new Box2D.PolygonShape().SetAsBox(
+    DefaultProperties[OBJECT_TYPE.SIMPLE_BULLET].scale.x *
+      PhysicsParameters.SCALAR,
+    DefaultProperties[OBJECT_TYPE.SIMPLE_BULLET].scale.y *
+      PhysicsParameters.SCALAR,
+  ),
 }

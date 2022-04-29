@@ -35,11 +35,12 @@ import {
   HexColor,
   parseTime,
 } from '../../utils'
+import { EffectBase } from '../engine/objects/effects/effectBase'
 import { Resources } from '../resources'
 import { Bar } from './Bar'
+import { GameResult, GameResultDialog } from './GameResultDialog'
 
 import './gui.scss'
-import { GameResult, GameResultDialog } from './GameResultDialog'
 
 const barSaturation = 300
 const DAMAGE_EFFECT_DURATION = 1000
@@ -65,13 +66,15 @@ declare interface GUIEventEmitter {
 class GUIEventEmitter extends EventEmitter {}
 
 export interface GUIController {
-  setPaused: React.Dispatch<React.SetStateAction<boolean>>
   setFPS: React.Dispatch<React.SetStateAction<number>>
   setZoom: React.Dispatch<React.SetStateAction<number>>
   setElapsedTime: React.Dispatch<React.SetStateAction<number>>
-  setGameScore: React.Dispatch<React.SetStateAction<number | null>>
+  setGameScore: React.Dispatch<React.SetStateAction<number>>
   setPlayerHP: (hp: number, takenDamage?: number) => void
   setPlayerSpeed: React.Dispatch<React.SetStateAction<number>>
+  setPlayerEffects: React.Dispatch<
+    React.SetStateAction<{ effect: EffectBase; duration: number }[]>
+  >
   setGameMode: React.Dispatch<React.SetStateAction<GAME_MODE | null>>
   setGameMap: React.Dispatch<React.SetStateAction<GAME_MAP | null>>
   setLoadingResources: (loading: boolean) => void
@@ -80,6 +83,9 @@ export interface GUIController {
     score: number | null,
     isPlayerDead: boolean,
   ) => void
+  setPaused: React.Dispatch<React.SetStateAction<boolean>>
+  setEnemiesToKill: React.Dispatch<React.SetStateAction<number | null>>
+
   events: GUIEventEmitter
 }
 
@@ -97,12 +103,18 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
   const [fps, setFPS] = useState(0)
   const [zoom, setZoom] = useState(1)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [gameScore, setGameScore] = useState<number | null>(null)
+  const [gameScore, setGameScore] = useState<number>(0)
   const [playerHP, setPlayerHP] = useState<number>(0.5)
   const [playerSpeed, setPlayerSpeed] = useState<number>(0.5)
+  const [playerEffects, setPlayerEffects] = useState<
+    { effect: EffectBase; duration: number }[]
+  >([])
   const [gameMode, setGameMode] = useState<GAME_MODE | null>(null)
   const [gameMap, setGameMap] = useState<GAME_MAP | null>(null)
   const [paused, setPaused] = useState(false)
+
+  // Goals
+  const [enemiesToKill, setEnemiesToKill] = useState<number | null>(null)
 
   const [damageEffects, setDamageEffects] = useState<
     { id: string; value: number }[]
@@ -140,17 +152,19 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
   useImperativeHandle(
     ref,
     () => ({
-      setPaused,
       setLoadingResources,
+      showResults: handleShowGameResults,
       setFPS,
       setZoom,
       setGameScore,
       setElapsedTime,
       setPlayerHP: handleSetPlayerHP,
       setPlayerSpeed,
+      setPlayerEffects,
       setGameMode,
       setGameMap,
-      showResults: handleShowGameResults,
+      setPaused,
+      setEnemiesToKill,
       events: emitterRef.current,
     }),
     [handleSetPlayerHP, handleShowGameResults],
@@ -175,11 +189,25 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                 <label>{t('game:map')}:</label>
                 <span>{gameMap ? t(gameMapsInfo[gameMap].name) : '-'}</span>
                 <label>{t('game:elapsedTime')}:</label>
-                <span>{parseTime(elapsedTime)}</span>
-                {gameScore !== null && (
+                {gameMode === GAME_MODE.CAMPAIGN && (
                   <>
                     <label>{t('game:score')}:</label>
-                    <span>{gameScore}</span>
+                    <span>{Math.round(gameScore)}</span>
+                  </>
+                )}
+                <span>{parseTime(elapsedTime)}</span>
+                {enemiesToKill !== null && (
+                  <>
+                    <label className="stats-category-separator">
+                      {t('game:goal.label')}
+                    </label>
+                    <span className="dummy" />
+                  </>
+                )}
+                {enemiesToKill !== null && (
+                  <>
+                    <label>{t('game:goal.enemiesLeftToKill')}:</label>
+                    <span>{enemiesToKill}</span>
                   </>
                 )}
               </div>
@@ -214,7 +242,32 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                 </div>
                 <div className="player-property-info">
                   <label>{t('game:player.activeEffects')}</label>
-                  <div>-</div>
+                  <div className="active-effects">
+                    {playerEffects.length ? (
+                      playerEffects.map(({ effect, duration }) =>
+                        effect.icon ? (
+                          <span key={effect.id}>
+                            <img src={effect.icon} />
+                            <svg viewBox="0 0 24 24">
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="11"
+                                style={{
+                                  animationDuration: `${duration}ms`,
+                                  animationPlayState: paused
+                                    ? 'paused'
+                                    : 'running',
+                                }}
+                              />
+                            </svg>
+                          </span>
+                        ) : null,
+                      )
+                    ) : (
+                      <span>-</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div>
@@ -236,11 +289,17 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                       path={mdiMinus}
                       title="Zoom out"
                       size="20px"
-                      onClick={() => emitterRef.current.emit('zoom-in')}
+                      onClick={(e) => {
+                        emitterRef.current.emit('zoom-in')
+                        ;(e.target as HTMLButtonElement).blur()
+                      }}
                       disabled={paused}
                     />
                     <button
-                      onClick={() => emitterRef.current.emit('zoom-reset')}
+                      onClick={(e) => {
+                        emitterRef.current.emit('zoom-reset')
+                        ;(e.target as HTMLButtonElement).blur()
+                      }}
                       disabled={paused || zoom === 1}
                     >
                       {t('game:resetZoom')}
@@ -249,7 +308,10 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                       path={mdiPlus}
                       title="Zoom out"
                       size="20px"
-                      onClick={() => emitterRef.current.emit('zoom-out')}
+                      onClick={(e) => {
+                        emitterRef.current.emit('zoom-out')
+                        ;(e.target as HTMLButtonElement).blur()
+                      }}
                       disabled={paused}
                     />
                   </div>
@@ -267,7 +329,10 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                 </div>
                 <div className="bottom-options">
                   <button
-                    onClick={() => emitterRef.current.emit('toggle-game-pause')}
+                    onClick={(e) => {
+                      emitterRef.current.emit('toggle-game-pause')
+                      ;(e.target as HTMLButtonElement).blur()
+                    }}
                   >
                     <Icon
                       path={paused ? mdiPlay : mdiPause}
@@ -276,7 +341,12 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                     />
                     {t(paused ? 'game:resume' : 'game:pause')}
                   </button>
-                  <button onClick={() => setSettingsDialogOpen(true)}>
+                  <button
+                    onClick={(e) => {
+                      setSettingsDialogOpen(true)
+                      ;(e.target as HTMLButtonElement).blur()
+                    }}
+                  >
                     <Icon
                       path={mdiCog}
                       size="16px"
@@ -284,7 +354,12 @@ export const GUI = forwardRef<GUIController>(function GUI(_, ref) {
                     />
                     {t('game:settings')}
                   </button>
-                  <button onClick={() => setExitGameDialogOpen(true)}>
+                  <button
+                    onClick={(e) => {
+                      setExitGameDialogOpen(true)
+                      ;(e.target as HTMLButtonElement).blur()
+                    }}
+                  >
                     <Icon
                       path={mdiExitToApp}
                       size="16px"

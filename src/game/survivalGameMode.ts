@@ -13,6 +13,16 @@ export class SurvivalGameMode extends GameCore {
     super(GAME_MODE.SURVIVAL, renderer, gui)
   }
 
+  onUpdate() {
+    // noop
+  }
+
+  onGameStarted() {
+    this.engine?.events.on('enemy-damaged', (damage) => {
+      console.log(damage)
+    })
+  }
+
   protected onGameOver(isPlayerDead: boolean) {
     //TODO: save results
 

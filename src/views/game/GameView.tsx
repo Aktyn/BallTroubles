@@ -1,6 +1,7 @@
 import { useRef, useEffect, useContext } from 'react'
 import { AppContext } from '../../context/appContext'
 import { CampaignGameMode } from '../../game/campaignGameMode'
+import { GameCore } from '../../game/gameCore'
 import { ThreeJSRenderer } from '../../game/graphics/threeJSRenderer'
 import { GUIController, GUI } from '../../game/gui'
 import { SurvivalGameMode } from '../../game/survivalGameMode'
@@ -34,7 +35,7 @@ export const GameView = ({ mode, map, onExit }: GameViewProps) => {
 
     try {
       const renderer = new ThreeJSRenderer(canvasRef.current)
-      const gameCore =
+      const gameCore: GameCore | null =
         mode === GAME_MODE.TUTORIAL
           ? new TutorialGameMode(app, renderer, gui)
           : mode === GAME_MODE.CAMPAIGN

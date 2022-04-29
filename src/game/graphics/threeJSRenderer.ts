@@ -4,6 +4,7 @@ import { EmitterBase } from '../engine/emitters/emitterBase'
 import { GameMap } from '../engine/gameMap'
 import { LightSource } from '../engine/lights/lightSource'
 import { ObjectBase } from '../engine/objects/objectBase'
+import { SpriteBase } from '../engine/objects/sprites/spriteBase'
 import { ThreeJSParticleSystem } from './particles/ThreeJSParticleSystem'
 import { EnvironmentOptions, Renderer } from './renderer'
 import { ThreeJSResources } from './threeJSResources'
@@ -20,7 +21,7 @@ export class ThreeJSRenderer extends Renderer {
     super(canvas)
 
     this.camera = new THREE.PerspectiveCamera(
-      70,
+      45,
       this.canvas.width / this.canvas.height,
       0.01,
       10,
@@ -205,33 +206,69 @@ export class ThreeJSRenderer extends Renderer {
     })
   }
 
-  private async synchronizeRenderableObjects(
-    renderables: readonly Renderable<never>[],
+  private synchronizeThreeJSSprite(
+    sprite: SpriteBase,
+    threeJsSprite: THREE.Sprite,
   ) {
-    for (const renderable of renderables) {
+    threeJsSprite.position.set(
+      sprite.position.x,
+      sprite.position.y,
+      sprite.position.z,
+    )
+    threeJsSprite.scale.set(sprite.scale.x, sprite.scale.y, 1)
+    threeJsSprite.material.color.set(
+      ((sprite.color.r * 255) << 16) |
+        ((sprite.color.g * 255) << 8) |
+        (sprite.color.b * 255),
+    )
+    threeJsSprite.updateMatrix()
+  }
+
+  private async synchronizeSprite(sprite: SpriteBase) {
+    const threeJsSprite = new THREE.Sprite(
+      await ThreeJSResources.getMaterial(sprite.properties.material),
+    )
+    threeJsSprite.matrixAutoUpdate = false
+
+    this.synchronizeThreeJSSprite(sprite, threeJsSprite)
+    this.scene.add(threeJsSprite)
+
+    sprite.synchronizeWithRenderer({
+      onUpdate: () => this.synchronizeThreeJSSprite(sprite, threeJsSprite),
+      onRemoved: () => {
+        this.scene.remove(threeJsSprite)
+      },
+    })
+  }
+
+  private async synchronizeRenderableObjects(
+    renderables: Set<Renderable<never>>,
+  ) {
+    const values = renderables.values()
+    let next = values.next()
+
+    while (!next.done) {
+      const renderable = next.value
       if (renderable instanceof EmitterBase) {
         await this.synchronizeEmitter(renderable)
       } else if (renderable instanceof LightSource) {
         this.synchronizeLight(renderable)
       } else if (renderable instanceof ObjectBase) {
         await this.synchronizeObject(renderable)
+      } else if (renderable instanceof SpriteBase) {
+        await this.synchronizeSprite(renderable)
       }
-      if (renderable instanceof ObjectBase && renderable.children.length) {
-        await this.synchronizeRenderableObjects(
-          (renderable.children as unknown[]).filter(
-            (child) => child instanceof Renderable,
-          ) as Renderable<never>[],
-        )
-      }
+
+      renderables.delete(renderable)
+      next = values.next()
     }
   }
 
   render(map: Readonly<GameMap>) {
-    if (!this.synchronizing) {
+    if (!this.synchronizing && map.notSynchronizedRenderables.size > 0) {
       this.synchronizing = true
       this.synchronizeRenderableObjects(map.notSynchronizedRenderables).finally(
         () => {
-          map.onRenderablesSynchronized()
           this.synchronizing = false
         },
       )

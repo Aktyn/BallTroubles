@@ -9,10 +9,13 @@ import { Resources } from './resources'
 const MAX_DELTA_TIME = 0.5
 
 export abstract class GameCore {
+  protected static readonly DAMAGE_SCORE_MULTIPLIER = 100 as const
+  protected static readonly KILL_SCORE = 1000
+
   private readonly mode: GAME_MODE
-  private readonly gui: GUIController
+  protected readonly gui: GUIController
   private readonly renderer: Renderer
-  private engine: GameEngine | null = null
+  protected engine: GameEngine | null = null
   private steering: KeyboardSteering | null = null
 
   private readonly updateFrame = this.update.bind(this)
@@ -28,7 +31,7 @@ export abstract class GameCore {
   private frameCounter = 0
 
   private elapsedTime = 0
-  private score: number | null = null
+  protected score = 0
 
   constructor(mode: GAME_MODE, renderer: Renderer, gui: GUIController) {
     this.mode = mode
@@ -68,6 +71,9 @@ export abstract class GameCore {
     this.gui.setPaused((this.paused = !this.paused))
   }
 
+  abstract onGameStarted(map: GAME_MAP): void
+  abstract onUpdate(deltaTime: number): void
+
   protected onGameOver(isPlayerDead: boolean) {
     this.running = false
     this.gui.showResults(this.elapsedTime, this.score, isPlayerDead)
@@ -94,14 +100,16 @@ export abstract class GameCore {
         throw new Error('Steering is not initialized')
       }
       console.log('Loading map:', map) //TODO: switch map generators according to map parameter
-      generateTutorialMap(this.engine, this.renderer)
       this.engine.spawnPlayer(this.steering, () => this.onGameOver(true), true)
+      generateTutorialMap(this.engine, this.renderer)
 
       this.elapsedTime = 0
       this.previousTime = 0
       this.frameCounter = 0
       this.running = true
       this.paused = false
+      this.score = 0
+      this.onGameStarted(map)
       this.update(0)
     })
   }
@@ -128,10 +136,6 @@ export abstract class GameCore {
     if (Math.floor(time / SECOND) > Math.floor(this.previousTime / SECOND)) {
       this.gui.setFPS(this.frameCounter)
       this.frameCounter = 0
-
-      // if (this.mode === GAME_MODE.CAMPAIGN) {
-      //   this.gui.setGameScore(this.score)
-      // }
     }
     this.frameCounter++
     this.previousTime = time
@@ -142,6 +146,7 @@ export abstract class GameCore {
         this.gui.setElapsedTime(this.elapsedTime)
         this.engine.update(deltaTime)
         this.renderer.render(this.engine.getMap())
+        this.onUpdate(deltaTime)
       } else {
         console.warn(`Delta time is too big: ${deltaTime}. Skipping frame.`)
       }

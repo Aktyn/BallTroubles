@@ -39,7 +39,7 @@ export const MenuTutorialMode = ({
         style={{ fontSize: 22 }}
         onClick={() => onStartGame?.(GAME_MODE.TUTORIAL, GAME_MAP.TUTORIAL)}
       >
-        <Icon path={mdiPlay} size="16px" style={{ marginRight: 4 }} />
+        <Icon path={mdiPlay} size="24px" style={{ marginRight: 4 }} />
         {t(
           userCompletedTutorial
             ? 'menu:gameMode.tutorial.startAgain'

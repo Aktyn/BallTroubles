@@ -1,4 +1,3 @@
-import { HealEffect } from 'game/engine/objects/effects/healEffect'
 import { randomFloat, Vector3 } from '../../utils'
 import { StarsEmitter } from '../engine/emitters/starsEmitter'
 import { SunLight } from '../engine/lights/sunLight'
@@ -8,6 +7,8 @@ import {
   BACKGROUND_TEXTURE,
 } from '../engine/objects/common'
 import { DynamicObject } from '../engine/objects/dynamicObject'
+import { GunEffect } from '../engine/objects/effects/gunEffect'
+import { HealEffect } from '../engine/objects/effects/healEffect'
 import { Portal } from '../engine/objects/portal'
 import { RockEnemy } from '../engine/objects/rockEnemy'
 import { MapGenerator } from './common'
@@ -20,35 +21,35 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
       intensity: 1,
     },
     fog: {
-      near: 0.5,
-      far: 2,
+      near: 1.5,
+      far: 2.5,
     },
     backgroundTexture: BACKGROUND_TEXTURE.NEBULA_1,
   })
 
   // Background particles (should be added before all objects)
-  engine.map.addEmitter(
+  engine.map.add(
     new StarsEmitter({
       xRotationSpeed: 1,
       yRotationSpeed: 2,
       zRotationSpeed: 3,
     }),
   )
-  engine.map.addEmitter(
+  engine.map.add(
     new StarsEmitter({
       xRotationSpeed: -1,
       yRotationSpeed: -2,
       zRotationSpeed: -3,
     }),
   )
-  engine.map.addEmitter(
+  engine.map.add(
     new StarsEmitter({
       xRotationSpeed: 3,
       yRotationSpeed: 2,
       zRotationSpeed: 1,
     }),
   )
-  engine.map.addEmitter(
+  engine.map.add(
     new StarsEmitter({
       xRotationSpeed: -3,
       yRotationSpeed: -2,
@@ -73,7 +74,7 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
           material: OBJECT_MATERIAL.WOODEN_CRATE,
         },
       )
-      engine.map.addObject(wallObj)
+      engine.map.add(wallObj)
     }
   }
 
@@ -86,25 +87,31 @@ export const generateTutorialMap: MapGenerator = (engine, renderer) => {
     )
     obj.setAngle(randomFloat(-Math.PI * 2, Math.PI * 2))
     obj.setLinearVelocity(randomFloat(0, 0.5))
-
-    engine.map.addObject(obj)
+    engine.map.add(obj)
+    // obj.shouldBeDeleted = true //!
 
     //Randomly placed effects
-    engine.map.addObject(
+    engine.map.add(
       new HealEffect(
+        new Vector3(randomFloat(-0.9, 0.9), randomFloat(-0.9, 0.9), 0),
+        engine.world,
+      ),
+    )
+    engine.map.add(
+      new GunEffect(
         new Vector3(randomFloat(-0.9, 0.9), randomFloat(-0.9, 0.9), 0),
         engine.world,
       ),
     )
   }
 
-  engine.map.addObject(new Portal(new Vector3(0.5, 0.5, 0), engine.world, 0))
-  engine.map.addObject(new Portal(new Vector3(-0.5, -0.5, 0), engine.world, 0))
+  engine.map.add(new Portal(new Vector3(0.5, 0.5, 0), engine.world, 0))
+  engine.map.add(new Portal(new Vector3(-0.5, -0.5, 0), engine.world, 0))
 
-  engine.map.addObject(new Portal(new Vector3(-0.5, 0.5, 0), engine.world, 1))
-  engine.map.addObject(new Portal(new Vector3(0.5, -0.5, 0), engine.world, 1))
+  engine.map.add(new Portal(new Vector3(-0.5, 0.5, 0), engine.world, 1))
+  engine.map.add(new Portal(new Vector3(0.5, -0.5, 0), engine.world, 1))
 
   // Setup lights
   const sun = new SunLight(new Vector3(1, 1, 2))
-  engine.map.addLight(sun)
+  engine.map.add(sun)
 }

@@ -5,6 +5,7 @@ import {
   BACKGROUND_TEXTURE,
   OBJECT_MATERIAL,
   OBJECT_TYPE,
+  SPRITE_MATERIAL,
 } from '../engine/objects/common'
 import { Resources } from '../resources'
 import { OBJLoader } from './loaders/OBJLoader'
@@ -40,6 +41,11 @@ const ThreeJSTextures = {
     fire: setupColorTexture(
       textureLoader.load(
         require('../../assets/textures/particles/fire_particle.png'),
+      ),
+    ),
+    heal: setupColorTexture(
+      textureLoader.load(
+        require('../../assets/textures/particles/heal_particle.png'),
       ),
     ),
   },
@@ -82,11 +88,24 @@ const ThreeJSTextures = {
       textureLoader.load(require('../../assets/textures/player/player.png')),
     ),
   },
+  gun1: {
+    color: setupColorTexture(
+      textureLoader.load(
+        require('../../assets/textures/effects/gun1Color.jpg'),
+      ),
+    ),
+  },
 }
 
 const linearWhite = new THREE.Color(palette.white).convertSRGBToLinear()
 
 const fallbackGeometry = new THREE.BoxBufferGeometry(1, 1, 1)
+
+const loadGeometryFromObjFile = async (filePath: string) => {
+  const obj = await objLoader.loadAsync(filePath)
+  return obj.children[0].geometry as THREE.BufferGeometry
+}
+
 const geometryLoader = async (objectType: OBJECT_TYPE) => {
   try {
     switch (objectType) {
@@ -95,13 +114,18 @@ const geometryLoader = async (objectType: OBJECT_TYPE) => {
         return new THREE.BoxBufferGeometry(1, 1, 1)
       case OBJECT_TYPE.SMALL_BALL:
         return new THREE.IcosahedronBufferGeometry(1, 4) //new THREE.SphereBufferGeometry(1, 16, 16)
-      case OBJECT_TYPE.HEAL_PLUS: {
-        const plusObj = await objLoader.loadAsync(
+      case OBJECT_TYPE.HEAL_PLUS:
+        return await loadGeometryFromObjFile(
           require('../../assets/meshes/plus.obj'),
         )
-        const geometry = plusObj.children[0].geometry as THREE.BufferGeometry
-        return geometry
-      }
+      case OBJECT_TYPE.GUN1:
+        return await loadGeometryFromObjFile(
+          require('../../assets/meshes/gun.obj'),
+        )
+      case OBJECT_TYPE.SIMPLE_BULLET:
+        return await loadGeometryFromObjFile(
+          require('../../assets/meshes/bullet.obj'),
+        )
     }
   } catch (e) {
     console.error(e)
@@ -122,9 +146,14 @@ const getDefaultParticleMaterialProperties =
     vertexColors: true,
   })
 
-const materialLoader = async (materialType: OBJECT_MATERIAL) => {
+const materialLoader = async <
+  MaterialType extends OBJECT_MATERIAL | SPRITE_MATERIAL,
+>(
+  materialType: MaterialType,
+) => {
   switch (materialType) {
     default:
+      throw new Error(`Material type is not supported: ${materialType}`)
     case OBJECT_MATERIAL.WOODEN_CRATE:
       return new THREE.MeshPhongMaterial({
         color: linearWhite,
@@ -151,16 +180,17 @@ const materialLoader = async (materialType: OBJECT_MATERIAL) => {
       return new THREE.MeshStandardMaterial({
         flatShading: false,
         color: new THREE.Color(
-          palette['deep-orange']['500'],
+          palette['deep-orange']['900'],
         ).convertSRGBToLinear(),
-        map: ThreeJSTextures.player.color,
-        // envMap: ThreeJSTextures.environment.nebula1,
-        // reflectivity: 0,
-        // combine: THREE.AddOperation,
+        // color: new THREE.Color('#000').convertSRGBToLinear(),
+        // map: ThreeJSTextures.player.color,
+        emissiveMap: ThreeJSTextures.player.color,
         emissive: new THREE.Color(
-          palette['deep-orange']['600'],
+          palette['deep-orange']['800'],
         ).convertSRGBToLinear(),
-        emissiveIntensity: 2.5,
+        emissiveIntensity: 1.5,
+        metalness: 1,
+        roughness: 0.3,
       })
     case OBJECT_MATERIAL.HEAL_PLUS:
       return new THREE.MeshStandardMaterial({
@@ -171,8 +201,25 @@ const materialLoader = async (materialType: OBJECT_MATERIAL) => {
         emissive: new THREE.Color(palette.green['600']).convertSRGBToLinear(),
         emissiveIntensity: 3,
       })
+    case OBJECT_MATERIAL.GUN1:
+      return new THREE.MeshStandardMaterial({
+        flatShading: false,
+        color: linearWhite,
+        map: ThreeJSTextures.gun1.color,
+        metalness: 1,
+        roughness: 0.3,
+      })
+    case OBJECT_MATERIAL.SIMPLE_BULLET:
+      return new THREE.MeshStandardMaterial({
+        flatShading: false,
+        color: new THREE.Color(palette.red['400']).convertSRGBToLinear(),
+        envMap: ThreeJSTextures.environment.nebula1,
+        envMapIntensity: 2,
+        metalness: 1,
+        roughness: 0.1,
+      })
 
-    /** PARTICLE MATERIAL **/
+    /** PARTICLE MATERIALS **/
     case OBJECT_MATERIAL.SIMPLE_PARTICLE:
       return new THREE.ShaderMaterial({
         ...getDefaultParticleMaterialProperties(),
@@ -190,6 +237,7 @@ const materialLoader = async (materialType: OBJECT_MATERIAL) => {
             value: ThreeJSTextures.particle.star,
           },
         },
+        depthTest: true,
       })
     case OBJECT_MATERIAL.FIRE_PARTICLE:
       return new THREE.ShaderMaterial({
@@ -204,6 +252,27 @@ const materialLoader = async (materialType: OBJECT_MATERIAL) => {
         depthFunc: THREE.LessEqualDepth,
         transparent: true,
         blending: THREE.AdditiveBlending,
+      })
+    case OBJECT_MATERIAL.HEAL_PARTICLE:
+      return new THREE.ShaderMaterial({
+        ...getDefaultParticleMaterialProperties(),
+        uniforms: {
+          pointTexture: {
+            value: ThreeJSTextures.particle.heal,
+          },
+        },
+        depthTest: true,
+        depthWrite: false,
+        depthFunc: THREE.LessEqualDepth,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+      })
+
+    /** SPRITE MATERIALS */
+    case SPRITE_MATERIAL.HEALTH_BAR:
+      return new THREE.SpriteMaterial({
+        // color: new THREE.Color(palette.red['500']).convertSRGBToLinear(),
+        transparent: false,
       })
   }
 }
@@ -237,9 +306,13 @@ const resourceGetter = <KeyType, ValueType>(
 export const ThreeJSResources: {
   getBackgroundTexture: typeof backgroundTextureGetter
   getGeometry: (shape: OBJECT_TYPE) => Promise<THREE.BufferGeometry>
-  getMaterial: (material: OBJECT_MATERIAL) => Promise<THREE.Material>
+  getMaterial: <MaterialType extends OBJECT_MATERIAL | SPRITE_MATERIAL>(
+    material: MaterialType,
+  ) => Promise<
+    MaterialType extends OBJECT_MATERIAL ? THREE.Material : THREE.SpriteMaterial
+  >
 } = {
   getBackgroundTexture: backgroundTextureGetter,
   getGeometry: resourceGetter(geometryLoader),
-  getMaterial: resourceGetter(materialLoader),
+  getMaterial: resourceGetter(materialLoader) as never,
 }
